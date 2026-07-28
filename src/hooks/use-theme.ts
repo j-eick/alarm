@@ -8,7 +8,8 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function useTheme() {
   const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
+  // useColorScheme kann 'light' | 'dark' | null | undefined liefern → auf 'light' defaulten.
+  const theme = scheme ?? 'light';
 
   return Colors[theme];
 }

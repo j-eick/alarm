@@ -1,56 +1,65 @@
-# Welcome to your Expo app 👋
+# Alarm on Drugs
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+KI-gestützte, personalisierbare Wecker-App (Expo / React Native, TypeScript).
+Der Wecker erfasst Stimmung/Kontext und generiert daraus einen persönlichen
+Weck-Talk (Claude) + optional einen per Cloud-TTS erzeugten Weckton. Ohne
+API-Keys läuft alles im Mock-Modus (vordefinierte Texte + Geräte-TTS).
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Start
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+App in **Expo Go** (echtes Handy) öffnen. Optional Keys setzen: `.env.example`
+nach `.env` kopieren und ausfüllen.
 
-### Other setup steps
+## Architektur (Kurzüberblick)
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Klare Schichtentrennung — UI kennt keine API-/Storage-Details:
 
-## Learn more
+- `src/app/` — Screens (expo-router): Liste, Editor `alarm/[id]`, Weck-Screen `ring`.
+- `src/components/` — präsentationale UI (AlarmCard, Picker, Button, Chip).
+- `src/hooks/use-alarms.ts` — Domänen-Store: einzige UI-Schnittstelle zu Alarmen.
+- `src/lib/` — Services:
+  - `storage.ts` (AsyncStorage), `scheduler.ts` + `notifications.ts` (expo-notifications),
+    `audio.ts` (expo-audio + expo-speech), `time.ts`/`id.ts` (reine Utils).
+  - `ai/` — **provider-agnostische KI-Schicht**: Interfaces (`providers/types.ts`),
+    Anbieter (Claude, Mock, ElevenLabs-TTS), Content-Type-**Registry**
+    (`content-types.ts`), Orchestrator (`index.ts`), Konfiguration (`config.ts`).
+- `src/types.ts` — zentrale Datenmodelle.
 
-To learn more about developing your project with Expo, look at the following resources:
+### Erweitern
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- **Neuer Weck-Inhaltstyp:** Eintrag in `src/lib/ai/content-types.ts` + `ContentTypeId`
+  in `src/types.ts`. UI-Picker aktualisiert sich automatisch.
+- **Neuer KI-Anbieter:** neue Datei unter `src/lib/ai/providers/`, die `TextProvider`
+  bzw. `TtsProvider` implementiert; im Orchestrator einhängen.
 
-## Join the community
+## Design-Varianten (Nomenklatur)
 
-Join our community of developers creating universal apps.
+Manche UI-Elemente haben **mehrere Designs**, die sich schnell umschalten lassen.
+Zentrale Schalter: [src/constants/design.ts](src/constants/design.ts). Im Gespräch
+kann man ein Design per Kurzname ansteuern (z.B. „zurück auf `tile/v1`" oder
+„nimm `sheet/solid`").
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- **`tile/*` — Kacheln im Leerzustand** (Beispiel-Wecktöne)
+  - `v1-gradient-glow` *(aktiv)* — dezenter Farbverlauf + weiche Kreis-Artefakte, Vektor-Icon.
+  - Varianten liegen in [src/components/example-tile/variants/](src/components/example-tile/variants/);
+    aktive Variante via `TILE_VARIANT`. Neue Variante = Datei anlegen (gleiche Props
+    `ExampleTileProps`) + in [example-tile/index.tsx](src/components/example-tile/index.tsx)
+    registrieren + `TILE_VARIANT` umschalten.
+- **`sheet/*` — hochschiebender Einstellungs-Screen** (Alarm-Editor, [sheet-surface.tsx](src/components/sheet-surface.tsx))
+  - `glass` *(aktiv)* — halbtransparent + Blur, Hintergrund scheint durch.
+  - `solid` — deckende Fläche (Effekt aus). Umschalten via `SHEET_STYLE`.
+
+> Neue umschaltbare Designs nach demselben Muster ergänzen: benannte Variante +
+> zentraler Schalter in `constants/design.ts` + hier dokumentieren.
+
+## Bekannte Einschränkung
+
+Zuverlässige Hintergrund-Alarme mit langem Custom-Audio sind auf iOS/Android
+systembedingt limitiert. Prototyp: Wecken via lokale Notification; der Talk
+wird beim Antippen/Vordergrund abgespielt. Robuste System-Wecker = späterer
+nativer Ausbau (Dev Build).
