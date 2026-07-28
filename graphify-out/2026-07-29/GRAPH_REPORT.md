@@ -1,16 +1,16 @@
-# Graph Report - alarmOnDrugs  (2026-07-29)
+# Graph Report - alarmOnDrugs  (2026-07-28)
 
 ## Corpus Check
-- 54 files · ~59,420 words
+- 54 files · ~59,261 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 349 nodes · 613 edges · 48 communities (17 shown, 31 thin omitted)
+- 346 nodes · 612 edges · 47 communities (17 shown, 30 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 28 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `fee99629`
+- Built from commit: `83556627`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,7 +19,7 @@
 - src/types.ts
 - expo
 - Provider-agnostic AI Layer (src/lib/ai)
-- plugins
+- ring.tsx
 - index.ts
 - package.json
 - use-alarms.ts
@@ -36,7 +36,6 @@
 - expo
 - expo-audio
 - expo-blur
-- alarm-factory.ts
 - expo-file-system
 - expo-font
 - expo-linear-gradient
@@ -64,7 +63,7 @@
 - Splash Icon
 
 ## God Nodes (most connected - your core abstractions)
-1. `useTheme()` - 22 edges
+1. `useTheme()` - 23 edges
 2. `Spacing` - 14 edges
 3. `expo` - 13 edges
 4. `useAlarms()` - 13 edges
@@ -100,15 +99,15 @@
 - **Expo Branding Assets (Badges + Logo)** — assets_images_expo_badge_white_expobadgewhite, assets_images_expo_badge_expobadge, assets_images_expo_logo_expologo [INFERRED 0.85]
 - **App Tab Bar Icon Set (Home + Explore)** — assets_images_tabicons_home_hometabicon, assets_images_tabicons_explore_exploretabicon [INFERRED 0.85]
 
-## Communities (48 total, 31 thin omitted)
+## Communities (47 total, 30 thin omitted)
 
 ### Community 0 - "[id].tsx"
-Cohesion: 0.07
-Nodes (43): AnimatedPressable, SPRING, styles, styles, AppHeader(), styles, Chip(), ChipProps (+35 more)
+Cohesion: 0.08
+Nodes (41): AnimatedPressable, SPRING, styles, styles, AppHeader(), styles, Chip(), ChipProps (+33 more)
 
 ### Community 1 - "src/types.ts"
-Cohesion: 0.11
-Nodes (26): AlarmCard(), styles, weekdaysSummary(), ContentTypePickerProps, MoodPicker(), MoodPickerProps, styles, AnimatedPressable (+18 more)
+Cohesion: 0.12
+Nodes (26): AlarmCard(), styles, weekdaysSummary(), ContentTypePicker(), ContentTypePickerProps, styles, MoodPicker(), MoodPickerProps (+18 more)
 
 ### Community 2 - "expo"
 Cohesion: 0.08
@@ -118,9 +117,9 @@ Nodes (23): backgroundColor, backgroundImage, foregroundImage, monochromeImage, 
 Cohesion: 0.11
 Nodes (21): Expo Go 54, Expo SDK 54, Expo SDK 54 Versioned Docs, CLAUDE.md includes AGENTS.md, Provider-agnostic AI Layer (src/lib/ai), AI Orchestrator (ai/index.ts), Alarm on Drugs App, Background Alarm Limitation (iOS/Android) (+13 more)
 
-### Community 4 - "plugins"
-Cohesion: 0.21
-Nodes (11): plugins, expo-audio, expo-font, expo-router, expo-web-browser, @react-native-community/datetimepicker, RootLayout(), ensureAndroidChannel() (+3 more)
+### Community 4 - "ring.tsx"
+Cohesion: 0.13
+Nodes (22): plugins, expo-audio, expo-font, expo-router, expo-web-browser, @react-native-community/datetimepicker, RootLayout(), RingScreen() (+14 more)
 
 ### Community 5 - "index.ts"
 Cohesion: 0.22
@@ -131,8 +130,8 @@ Cohesion: 0.12
 Nodes (16): devDependencies, @types/react, typescript, main, name, private, scripts, android (+8 more)
 
 ### Community 7 - "use-alarms.ts"
-Cohesion: 0.11
-Nodes (33): AlarmEditorScreen(), AlarmListScreen(), RingScreen(), styles, AlarmCardProps, AlarmState, byTime(), deleteAlarm() (+25 more)
+Cohesion: 0.13
+Nodes (24): AlarmEditorScreen(), AlarmListScreen(), AlarmCardProps, AlarmState, byTime(), deleteAlarm(), getById(), init() (+16 more)
 
 ### Community 8 - "include"
 Cohesion: 0.15
@@ -171,24 +170,24 @@ Nodes (3): Switchable Design Variants (constants/design.ts), Sheet Variants (she
   assets/images/tutorial-web.png · relation: references
 
 ## Knowledge Gaps
-- **129 isolated node(s):** `AnimatedPressable`, `WeekdayPickerProps`, `WeekdayButtonProps`, `styles`, `name` (+124 more)
+- **126 isolated node(s):** `name`, `slug`, `version`, `orientation`, `icon` (+121 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **31 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **30 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **What is the exact relationship between `Explore Tab Icon` and `Expo Starter Web Tutorial Screenshot`?**
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
-- **Why does `plugins` connect `plugins` to `expo`?**
+- **Why does `plugins` connect `ring.tsx` to `expo`?**
   _High betweenness centrality (0.075) - this node is a cross-community bridge._
-- **Why does `expo` connect `expo` to `plugins`?**
+- **Why does `expo` connect `expo` to `ring.tsx`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
-- **Why does `expo-router` connect `plugins` to `[id].tsx`, `use-alarms.ts`?**
+- **Why does `expo-router` connect `ring.tsx` to `[id].tsx`?**
   _High betweenness centrality (0.062) - this node is a cross-community bridge._
 - **Are the 5 inferred relationships involving `useAlarms()` (e.g. with `deleteAlarm()` and `getById()`) actually correct?**
   _`useAlarms()` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `AnimatedPressable`, `WeekdayPickerProps`, `WeekdayButtonProps` to the rest of the system?**
-  _129 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **What connects `name`, `slug`, `version` to the rest of the system?**
+  _126 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `[id].tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.0744047619047619 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07853107344632769 - nodes in this community are weakly interconnected._
