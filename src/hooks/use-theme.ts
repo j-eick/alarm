@@ -3,13 +3,27 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
+import { createContext, useContext } from 'react';
+
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export function useTheme() {
-  const scheme = useColorScheme();
-  // useColorScheme kann 'light' | 'dark' | null | undefined liefern → auf 'light' defaulten.
-  const theme = scheme ?? 'light';
+export type ColorSchemeName = 'light' | 'dark';
 
-  return Colors[theme];
+/**
+ * Optionaler Scheme-Override für einen Teilbaum.
+ *
+ * Ohne Provider (Standard) folgt `useTheme` weiterhin dem System — die App
+ * verhält sich unverändert. Die Dev-Gallery (`app/(dev)/gallery.tsx`) nutzt den
+ * Provider, um Hell & Dunkel gleichzeitig nebeneinander zu rendern.
+ */
+export const ThemeSchemeContext = createContext<ColorSchemeName | null>(null);
+
+export function useTheme() {
+  const override = useContext(ThemeSchemeContext);
+  const scheme = useColorScheme();
+  // Override gewinnt; sonst System; useColorScheme kann null/undefined liefern → 'light'.
+  const active: ColorSchemeName = override ?? scheme ?? 'light';
+
+  return Colors[active];
 }
