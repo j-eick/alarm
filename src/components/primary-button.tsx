@@ -4,7 +4,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type Variant = 'primary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'danger' | 'ghost' | 'neutral';
 
 interface PrimaryButtonProps {
   title: string;
@@ -27,8 +27,14 @@ export function PrimaryButton({
   const theme = useTheme();
 
   const bg =
-    variant === 'primary' ? theme.accent : variant === 'danger' ? theme.danger : 'transparent';
-  const fg = variant === 'ghost' ? theme.accent : theme.accentText;
+    variant === 'primary'
+      ? theme.accent
+      : variant === 'danger'
+        ? theme.danger
+        : variant === 'neutral'
+          ? theme.textSecondary
+          : 'transparent';
+  const fg = variant === 'ghost' ? theme.accent : variant === 'neutral' ? theme.background : theme.accentText;
   const isDisabled = disabled || loading;
 
   return (

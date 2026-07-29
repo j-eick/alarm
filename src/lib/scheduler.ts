@@ -10,7 +10,7 @@ import * as Notifications from 'expo-notifications';
 
 import type { Alarm, Weekday } from '@/types';
 import { ALARM_CHANNEL_ID } from './notifications';
-import { nextOccurrence } from './time';
+import { nextOccurrence, nextOccurrenceOnWeekday } from './time';
 
 /** Nutzlast, die jede Alarm-Notification mitführt. */
 export interface AlarmNotificationData {
@@ -41,8 +41,10 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
   const content = buildContent(alarm);
   const ids: string[] = [];
 
-  if (alarm.weekdays.length === 0) {
-    // Einmaliger Alarm: nächstes Auftreten von hour:minute.
+  const onceDays = alarm.onceDays ?? [];
+
+  // Ohne jeden markierten Tag: einmaliger Alarm zum nächsten Auftreten.
+  if (alarm.weekdays.length === 0 && onceDays.length === 0) {
     const date = nextOccurrence(alarm.hour, alarm.minute);
     const id = await Notifications.scheduleNotificationAsync({
       content,
@@ -56,7 +58,7 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
     return ids;
   }
 
-  // Wiederkehrend: eine WEEKLY-Notification pro aktivem Wochentag.
+  // `weekly`: eine wiederkehrende WEEKLY-Notification pro dauerhaftem Wochentag.
   for (const weekday of alarm.weekdays) {
     const id = await Notifications.scheduleNotificationAsync({
       content,
@@ -65,6 +67,20 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
         weekday: toExpoWeekday(weekday),
         hour: alarm.hour,
         minute: alarm.minute,
+        channelId: ALARM_CHANNEL_ID,
+      },
+    });
+    ids.push(id);
+  }
+
+  // `once`: je eine einmalige DATE-Notification zum nächsten Auftreten des Tags.
+  for (const weekday of onceDays) {
+    const date = nextOccurrenceOnWeekday(weekday, alarm.hour, alarm.minute);
+    const id = await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date,
         channelId: ALARM_CHANNEL_ID,
       },
     });

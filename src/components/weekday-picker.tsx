@@ -10,26 +10,45 @@ import Animated, {
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { WEEKDAYS, WEEKDAY_LABELS, type Weekday } from '@/types';
+import { WEEKDAYS, WEEKDAY_LABELS, type Weekday, type WeekdayMode } from '@/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-// Kurze, weiche Farbüberblendung beim (De-)Selektieren.
+// Kurze, weiche Farbüberblendung beim Zustandswechsel.
 const FADE_DURATION = 180;
 
 interface WeekdayPickerProps {
-  value: Weekday[];
-  onChange: (weekdays: Weekday[]) => void;
+  /** Dauerhaft aktive Tage (jede Woche). */
+  weekly: Weekday[];
+  /** Tage, die in diesem Zyklus genau einmal klingeln. */
+  once: Weekday[];
+  onChange: (next: { weekly: Weekday[]; once: Weekday[] }) => void;
+}
+
+const sortDays = (days: Weekday[]) => [...days].sort((a, b) => a - b);
+
+/** Nächster Zustand im Zyklus: off → once → weekly → off. */
+function nextMode(mode: WeekdayMode): WeekdayMode {
+  if (mode === 'off') return 'once';
+  if (mode === 'once') return 'weekly';
+  return 'off';
 }
 
 /**
- * Mehrfachauswahl der Wochentage — 7 gleich breite, kompakte Buttons in einer
- * Zeile (flex:1, kein Umbruch). Leere Auswahl = einmaliger Alarm.
+ * Wochentag-Auswahl mit drei Zuständen pro Tag: nicht markiert (`off`),
+ * einmalig in diesem Zyklus (`once`, kleiner Punkt oben rechts) und dauerhaft
+ * jede Woche (`weekly`, voll gefüllt). Tippen schaltet zyklisch weiter.
  */
-export function WeekdayPicker({ value, onChange }: WeekdayPickerProps) {
-  const toggle = (day: Weekday) => {
-    onChange(
-      value.includes(day) ? value.filter((d) => d !== day) : [...value, day].sort((a, b) => a - b),
-    );
+export function WeekdayPicker({ weekly, once, onChange }: WeekdayPickerProps) {
+  const modeOf = (day: Weekday): WeekdayMode =>
+    weekly.includes(day) ? 'weekly' : once.includes(day) ? 'once' : 'off';
+
+  const cycle = (day: Weekday) => {
+    const target = nextMode(modeOf(day));
+    const nextWeekly = weekly.filter((d) => d !== day);
+    const nextOnce = once.filter((d) => d !== day);
+    if (target === 'weekly') nextWeekly.push(day);
+    if (target === 'once') nextOnce.push(day);
+    onChange({ weekly: sortDays(nextWeekly), once: sortDays(nextOnce) });
   };
 
   return (
@@ -38,8 +57,8 @@ export function WeekdayPicker({ value, onChange }: WeekdayPickerProps) {
         <WeekdayButton
           key={day}
           label={WEEKDAY_LABELS[day]}
-          selected={value.includes(day)}
-          onPress={() => toggle(day)}
+          mode={modeOf(day)}
+          onPress={() => cycle(day)}
         />
       ))}
     </View>
@@ -48,32 +67,36 @@ export function WeekdayPicker({ value, onChange }: WeekdayPickerProps) {
 
 interface WeekdayButtonProps {
   label: string;
-  selected: boolean;
+  mode: WeekdayMode;
   onPress: () => void;
 }
 
 /**
- * Einzelner Wochentag-Button. `selected` blendet Hintergrund und Rand weich
- * in die Akzentfarbe über; der Druck fügt eine kleine Skalierung hinzu. Die
- * Textfarbe wird bewusst direkt (ohne Animation) gesetzt, damit sie auf dem
- * hellen Hintergrund immer gut lesbar bleibt.
+ * Einzelner Wochentag-Button. `weekly` blendet Hintergrund und Rand weich in
+ * die Akzentfarbe über; `once` zeigt einen kleinen Akzent-Punkt oben rechts,
+ * ohne den Button zu füllen. Die Textfarbe wird bewusst direkt (ohne Animation)
+ * gesetzt, damit sie auf beiden Hintergründen gut lesbar bleibt.
  */
-function WeekdayButton({ label, selected, onPress }: WeekdayButtonProps) {
+function WeekdayButton({ label, mode, onPress }: WeekdayButtonProps) {
   const theme = useTheme();
+  const filled = mode === 'weekly';
 
-  // 0 = nicht ausgewählt, 1 = ausgewählt — sanft interpoliert.
-  const progress = useDerivedValue(() => withTiming(selected ? 1 : 0, { duration: FADE_DURATION }));
-  // Kleiner Druck-Effekt, unabhängig von der Auswahl-Animation.
+  // 0 = nicht gefüllt, 1 = gefüllt (weekly) — sanft interpoliert.
+  const fill = useDerivedValue(() => withTiming(filled ? 1 : 0, { duration: FADE_DURATION }));
+  // Punkt für den `once`-Zustand.
+  const dot = useDerivedValue(() => withTiming(mode === 'once' ? 1 : 0, { duration: FADE_DURATION }));
+  // Kleiner Druck-Effekt, unabhängig vom Zustand.
   const pressed = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      progress.value,
-      [0, 1],
-      [theme.backgroundElement, theme.accent],
-    ),
-    borderColor: interpolateColor(progress.value, [0, 1], [theme.border, theme.accent]),
+    backgroundColor: interpolateColor(fill.value, [0, 1], [theme.backgroundElement, theme.accent]),
+    borderColor: interpolateColor(fill.value, [0, 1], [theme.border, theme.accent]),
     transform: [{ scale: withTiming(pressed.value ? 0.94 : 1, { duration: 80 }) }],
+  }));
+
+  const dotStyle = useAnimatedStyle(() => ({
+    opacity: dot.value,
+    transform: [{ scale: dot.value }],
   }));
 
   return (
@@ -86,9 +109,10 @@ function WeekdayButton({ label, selected, onPress }: WeekdayButtonProps) {
         pressed.value = 0;
       }}
       style={[styles.day, animatedStyle]}>
-      <ThemedText type="small" style={{ color: selected ? theme.accentText : theme.text }}>
+      <ThemedText type="small" style={{ color: filled ? theme.accentText : theme.text }}>
         {label}
       </ThemedText>
+      <Animated.View style={[styles.dot, { backgroundColor: theme.accent }, dotStyle]} />
     </AnimatedPressable>
   );
 }
@@ -102,5 +126,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
 });

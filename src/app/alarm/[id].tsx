@@ -89,7 +89,7 @@ export default function AlarmEditorScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { getById, saveAlarm, deleteAlarm } = useAlarms();
+  const { getById, saveAlarm } = useAlarms();
 
   const isNew = id === 'new';
   const initial = useMemo<Alarm>(
@@ -259,10 +259,6 @@ export default function AlarmEditorScreen() {
 
   const handleSave = async () => {
     await saveAlarm(draft);
-    animateClose();
-  };
-  const handleDelete = async () => {
-    await deleteAlarm(draft.id);
     animateClose();
   };
 
@@ -525,23 +521,30 @@ export default function AlarmEditorScreen() {
 
             {step === 'schedule' && (
               <>
-                <ThemedText style={styles.stepTitle}>Wann klingeln?</ThemedText>
-                <Section title="Uhrzeit">
-                  <Pressable onPress={() => setShowPicker((s) => !s)}>
-                    <ThemedText style={styles.time}>{formatTime(draft.hour, draft.minute)}</ThemedText>
-                  </Pressable>
-                  {showPicker && (
+                <ThemedText style={[styles.stepTitle, styles.stepTitleCentered]}>Weckzeit</ThemedText>
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <View style={[styles.section, styles.timeRow]}>
+                  {showPicker ? (
                     <DateTimePicker
                       value={dateFromHourMinute(draft.hour, draft.minute)}
                       mode="time"
                       is24Hour
                       display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                       onChange={onTimeChange}
+                      style={styles.timeWheel}
                     />
+                  ) : (
+                    <Pressable onPress={() => setShowPicker(true)} style={styles.timeDisplay}>
+                      <ThemedText style={styles.time}>{formatTime(draft.hour, draft.minute)}</ThemedText>
+                    </Pressable>
                   )}
-                </Section>
-                <Section title="Wochentage (leer = einmalig)">
-                  <WeekdayPicker value={draft.weekdays} onChange={(weekdays) => patch({ weekdays })} />
+                </View>
+                <Section title="Wochentage (•)">
+                  <WeekdayPicker
+                    weekly={draft.weekdays}
+                    once={draft.onceDays}
+                    onChange={({ weekly, once }) => patch({ weekdays: weekly, onceDays: once })}
+                  />
                 </Section>
                 <Section title="Label">
                   <TextInput
@@ -559,10 +562,10 @@ export default function AlarmEditorScreen() {
           {/* Aktionsleiste */}
           <View style={[styles.actions, { paddingBottom: insets.bottom + Spacing.three + OVERSHOOT_PAD }]}>
             {step === 'schedule' ? (
-              <>
-                <PrimaryButton title="Speichern" onPress={() => void handleSave()} />
-                {!isNew && <PrimaryButton title="Löschen" variant="danger" onPress={() => void handleDelete()} />}
-              </>
+              <View style={styles.actionRow}>
+                <PrimaryButton title="Abbrechen" variant="neutral" onPress={animateClose} style={styles.actionButton} />
+                <PrimaryButton title="Speichern" onPress={() => void handleSave()} style={styles.actionButton} />
+              </View>
             ) : step === 'basis' || step === 'toneVoice' ? (
               <PrimaryButton title="Weiter" onPress={goNext} disabled={!canProceed} />
             ) : null}
@@ -660,8 +663,15 @@ const styles = StyleSheet.create({
   },
   multiline: { minHeight: 96, textAlignVertical: 'top' },
   previewBox: { padding: Spacing.three, borderRadius: Spacing.two },
+  stepTitleCentered: { textAlign: 'center', marginBottom: Spacing.half },
+  divider: { height: 2, borderRadius: 1, marginBottom: Spacing.three },
+  timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  timeDisplay: { flexShrink: 0 },
+  timeWheel: { flex: 1 },
   time: { fontSize: 56, fontWeight: '700', lineHeight: 62 },
   actions: { paddingHorizontal: Spacing.four, paddingTop: Spacing.two, gap: Spacing.two },
+  actionRow: { flexDirection: 'row', gap: Spacing.two },
+  actionButton: { flex: 1 },
   consentOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',

@@ -11,7 +11,8 @@ export function createAlarmDraft(): Alarm {
     id: createId(),
     hour: 7,
     minute: 0,
-    weekdays: [1, 2, 3, 4, 5], // Mo–Fr
+    weekdays: [1, 2, 3, 4, 5], // Mo–Fr (dauerhaft)
+    onceDays: [],
     label: 'Wecker',
     enabled: true,
     source: 'ai',

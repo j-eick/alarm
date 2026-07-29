@@ -196,8 +196,18 @@ function ButtonSpecimens() {
 }
 
 function WeekdayDemo() {
-  const [value, setValue] = useState<Weekday[]>([1, 2, 3, 4, 5]);
-  return <WeekdayPicker value={value} onChange={setValue} />;
+  const [weekly, setWeekly] = useState<Weekday[]>([1, 2, 3, 4, 5]);
+  const [once, setOnce] = useState<Weekday[]>([6]);
+  return (
+    <WeekdayPicker
+      weekly={weekly}
+      once={once}
+      onChange={({ weekly: w, once: o }) => {
+        setWeekly(w);
+        setOnce(o);
+      }}
+    />
+  );
 }
 
 function ToneDemo() {

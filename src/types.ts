@@ -11,6 +11,15 @@ export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const WEEKDAYS: Weekday[] = [1, 2, 3, 4, 5, 6, 7];
 
+/**
+ * Zustand eines Wochentags im Picker:
+ *  - `off`    → klingelt an diesem Tag nicht (nicht markiert).
+ *  - `once`   → klingelt in diesem Zyklus (aktuelle Woche) genau einmal, dann nie
+ *               wieder (kleiner Punkt oben rechts im Button).
+ *  - `weekly` → klingelt dauerhaft jede Woche (voll gefüllter Button).
+ */
+export type WeekdayMode = 'off' | 'once' | 'weekly';
+
 /** Kurzlabels für die UI (Index 0 = Montag). */
 export const WEEKDAY_LABELS: Record<Weekday, string> = {
   1: 'Mo',
@@ -61,8 +70,13 @@ export interface Alarm {
   hour: number;
   /** Minute 0–59. */
   minute: number;
-  /** Aktive Wochentage. Leer = einmalig beim nächsten Auftreten. */
+  /** Wochentage, an denen der Wecker dauerhaft jede Woche klingelt (`weekly`). */
   weekdays: Weekday[];
+  /**
+   * Wochentage, an denen der Wecker in diesem Zyklus genau einmal klingelt
+   * (`once`) und danach nicht mehr. Schließt sich pro Tag mit `weekdays` aus.
+   */
+  onceDays: Weekday[];
   label: string;
   enabled: boolean;
 

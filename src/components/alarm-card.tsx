@@ -15,9 +15,12 @@ interface AlarmCardProps {
 }
 
 function weekdaysSummary(alarm: Alarm): string {
-  if (alarm.weekdays.length === 0) return 'Einmalig';
+  const once = alarm.onceDays ?? [];
+  if (alarm.weekdays.length === 0 && once.length === 0) return 'Einmalig';
   if (alarm.weekdays.length === 7) return 'Täglich';
-  return alarm.weekdays.map((d) => WEEKDAY_LABELS[d]).join(' · ');
+  // Dauerhafte und einmalige Tage zusammen, aufsteigend; `once` mit Punkt markiert.
+  const days = [...new Set([...alarm.weekdays, ...once])].sort((a, b) => a - b);
+  return days.map((d) => (once.includes(d) ? `${WEEKDAY_LABELS[d]}•` : WEEKDAY_LABELS[d])).join(' · ');
 }
 
 /** Woher der Inhalt stammt — kurz für die Karte. */

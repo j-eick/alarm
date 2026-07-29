@@ -39,3 +39,28 @@ export function nextOccurrence(hour: number, minute: number, from: Date = new Da
   }
   return target;
 }
+
+/**
+ * Nächstes Auftreten an einem bestimmten ISO-Wochentag (1=Mo … 7=So) zur
+ * angegebenen Uhrzeit. Ist es heute dieser Wochentag und die Zeit noch nicht
+ * vorbei, wird heute genommen — sonst der gleiche Wochentag der Folgewoche.
+ */
+export function nextOccurrenceOnWeekday(
+  isoWeekday: number,
+  hour: number,
+  minute: number,
+  from: Date = new Date(),
+): Date {
+  // JS getDay(): 0=So … 6=Sa → in ISO (1=Mo … 7=So) umrechnen.
+  const fromIso = from.getDay() === 0 ? 7 : from.getDay();
+  const target = new Date(from);
+  target.setHours(hour, minute, 0, 0);
+
+  let deltaDays = (isoWeekday - fromIso + 7) % 7;
+  // Gleicher Wochentag, aber Zeit heute schon vorbei → nächste Woche.
+  if (deltaDays === 0 && target.getTime() <= from.getTime()) {
+    deltaDays = 7;
+  }
+  target.setDate(target.getDate() + deltaDays);
+  return target;
+}

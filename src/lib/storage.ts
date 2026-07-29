@@ -52,6 +52,7 @@ function normalizeAlarm(input: unknown): Alarm {
     hour: typeof r.hour === 'number' ? r.hour : 7,
     minute: typeof r.minute === 'number' ? r.minute : 0,
     weekdays: Array.isArray(r.weekdays) ? (r.weekdays as Weekday[]) : [1, 2, 3, 4, 5],
+    onceDays: Array.isArray(r.onceDays) ? (r.onceDays as Weekday[]) : [],
     label: typeof r.label === 'string' ? r.label : 'Wecker',
     enabled: r.enabled !== false,
     source,
