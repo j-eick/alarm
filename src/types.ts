@@ -23,33 +23,27 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
 };
 
 /**
- * Vom Nutzer manuell erfasster Kontext, aus dem die KI den Weck-Inhalt ableitet.
- * `mood` ist eine grobe Voreinstellung, `note` optionaler Freitext.
+ * Woher der Weck-Text kommt:
+ *  - `own` → der Nutzer tippt/diktiert ihn selbst.
+ *  - `ai`  → die KI schreibt ihn aus einem gewählten Thema.
  */
-export interface MoodContext {
-  mood: MoodId;
-  /** Optionaler Freitext, z.B. "Wichtiges Meeting um 9 Uhr". */
-  note?: string;
-}
+export type AlarmSource = 'own' | 'ai';
 
-export type MoodId =
-  | 'tired'
-  | 'stressed'
-  | 'motivated'
-  | 'anxious'
-  | 'neutral'
-  | 'happy'
-  | 'calm'
-  | 'sad'
-  | 'energetic'
-  | 'focused'
-  | 'overwhelmed';
+/** Sprech-Ton (Delivery-Stil). Registry: `constants/tones.ts`. */
+export type ToneId =
+  | 'sanft'
+  | 'froehlich'
+  | 'energetisch'
+  | 'motivierend'
+  | 'dramatisch'
+  | 'trocken'
+  | 'streng';
 
-/**
- * Art des zu generierenden Inhalts. Erweiterbar: ein neuer Typ wird in der
- * Registry (`lib/ai/content-types.ts`) ergänzt, ohne aufrufenden Code zu ändern.
- */
-export type ContentTypeId = 'motivationalTalk' | 'affirmation' | 'newsBriefing';
+/** Thema für die KI-Generierung. Registry: `constants/topics.ts`. */
+export type TopicId = 'motivation' | 'dankbarkeit' | 'tagesfokus' | 'achtsamkeit' | 'humor';
+
+/** Stimme für die TTS-Ausgabe. Registry: `constants/voices.ts`. */
+export type VoiceId = 'warm' | 'klar' | 'tief';
 
 /** Ein einzelner Wecker. */
 export interface Alarm {
@@ -62,8 +56,18 @@ export interface Alarm {
   weekdays: Weekday[];
   label: string;
   enabled: boolean;
-  context: MoodContext;
-  contentType: ContentTypeId;
+
+  /** Quelle des Weck-Texts. */
+  source: AlarmSource;
+  /** Der Weck-Text. Bei `own` vom Nutzer; bei `ai` das (zuletzt) generierte Ergebnis. */
+  text: string;
+  /** Nur bei `source: 'ai'` relevant: Thema, aus dem die KI schreibt. */
+  topic?: TopicId;
+  /** Sprech-Ton — unabhängig vom Inhalt. */
+  tone: ToneId;
+  /** Stimme für die Sprachausgabe. */
+  voice: VoiceId;
+
   /** IDs der geplanten Notifications (eine pro Wochentag). Vom Scheduler gesetzt. */
   scheduledIds: string[];
 }
@@ -76,7 +80,7 @@ export interface GeneratedContent {
   /** Lokaler oder Remote-URI der Audiodatei; null → Geräte-TTS als Fallback. */
   audioUri: string | null;
   /** Welche Quelle den Text erzeugt hat (für Debug/Anzeige). */
-  source: 'claude' | 'mock';
+  source: 'claude' | 'mock' | 'user';
   /** Unix-ms, wann erzeugt. */
   generatedAt: number;
 }

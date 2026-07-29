@@ -12,13 +12,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ContentTypePicker } from '@/components/content-type-picker';
-import { MoodPicker } from '@/components/mood-picker';
+import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
 import { SheetSurface } from '@/components/sheet-surface';
 import { ThemedText } from '@/components/themed-text';
 import { WeekdayPicker } from '@/components/weekday-picker';
 import { Spacing } from '@/constants/theme';
+import { TONE_OPTIONS } from '@/constants/tones';
+import { TOPIC_OPTIONS } from '@/constants/topics';
+import { VOICE_OPTIONS } from '@/constants/voices';
 import { useTheme } from '@/hooks/use-theme';
 import { useAlarms } from '@/hooks/use-alarms';
 import { createAlarmDraft } from '@/lib/alarm-factory';
@@ -181,36 +183,79 @@ export default function AlarmEditorScreen() {
               />
             </Section>
 
-            {/* Stimmung */}
-            <Section title="Wie fühlst du dich?">
-              <MoodPicker
-                value={draft.context.mood}
-                onChange={(mood) => patch({ context: { ...draft.context, mood } })}
-              />
+            {/* Quelle */}
+            <Section title="Quelle">
+              <View style={styles.chipRow}>
+                <Chip
+                  label="Eigener Text"
+                  selected={draft.source === 'own'}
+                  onPress={() => patch({ source: 'own' })}
+                />
+                <Chip
+                  label="Überrasch mich"
+                  selected={draft.source === 'ai'}
+                  onPress={() => patch({ source: 'ai' })}
+                />
+              </View>
             </Section>
 
-            {/* Kontext-Freitext */}
-            <Section title="Kontext (optional)">
-              <TextInput
-                value={draft.context.note}
-                onChangeText={(note) => patch({ context: { ...draft.context, note } })}
-                placeholder="z.B. Wichtiges Meeting um 9 Uhr"
-                placeholderTextColor={theme.textSecondary}
-                multiline
-                style={[
-                  styles.input,
-                  styles.multiline,
-                  { color: theme.text, backgroundColor: theme.backgroundElement },
-                ]}
-              />
+            {/* Entwurf — eigener Text (tippen/diktieren) oder Thema für die KI */}
+            {draft.source === 'own' ? (
+              <Section title="Dein Text">
+                <TextInput
+                  value={draft.text}
+                  onChangeText={(text) => patch({ text })}
+                  placeholder="Tippe oder diktiere deinen Weck-Text …"
+                  placeholderTextColor={theme.textSecondary}
+                  multiline
+                  style={[
+                    styles.input,
+                    styles.multiline,
+                    { color: theme.text, backgroundColor: theme.backgroundElement },
+                  ]}
+                />
+              </Section>
+            ) : (
+              <Section title="Thema">
+                <View style={styles.chipRow}>
+                  {TOPIC_OPTIONS.map((t) => (
+                    <Chip
+                      key={t.id}
+                      label={t.label}
+                      selected={draft.topic === t.id}
+                      onPress={() => patch({ topic: t.id })}
+                    />
+                  ))}
+                </View>
+              </Section>
+            )}
+
+            {/* Ton */}
+            <Section title="Ton">
+              <View style={styles.chipRow}>
+                {TONE_OPTIONS.map((t) => (
+                  <Chip
+                    key={t.id}
+                    label={t.label}
+                    selected={draft.tone === t.id}
+                    onPress={() => patch({ tone: t.id })}
+                  />
+                ))}
+              </View>
             </Section>
 
-            {/* Inhaltstyp */}
-            <Section title="Weck-Inhalt">
-              <ContentTypePicker
-                value={draft.contentType}
-                onChange={(contentType) => patch({ contentType })}
-              />
+            {/* Stimme */}
+            <Section title="Stimme">
+              <View style={styles.chipRow}>
+                {VOICE_OPTIONS.map((v) => (
+                  <Chip
+                    key={v.id}
+                    label={v.label}
+                    selected={draft.voice === v.id}
+                    onPress={() => patch({ voice: v.id })}
+                  />
+                ))}
+              </View>
             </Section>
           </ScrollView>
 
@@ -243,5 +288,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   multiline: { minHeight: 80, textAlignVertical: 'top' },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   actions: { paddingHorizontal: Spacing.four, paddingTop: Spacing.two, gap: Spacing.two },
 });

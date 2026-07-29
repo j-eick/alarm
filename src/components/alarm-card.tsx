@@ -1,10 +1,10 @@
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { moodOption } from '@/constants/moods';
 import { Spacing } from '@/constants/theme';
+import { toneOption } from '@/constants/tones';
+import { topicOption } from '@/constants/topics';
 import { useTheme } from '@/hooks/use-theme';
-import { getContentType } from '@/lib/ai/content-types';
 import { formatTime } from '@/lib/time';
 import { WEEKDAY_LABELS, type Alarm } from '@/types';
 
@@ -20,11 +20,15 @@ function weekdaysSummary(alarm: Alarm): string {
   return alarm.weekdays.map((d) => WEEKDAY_LABELS[d]).join(' · ');
 }
 
+/** Kurzbeschreibung des Weck-Inhalts: Quelle (bzw. Thema) + Ton. */
+function contentSummary(alarm: Alarm): string {
+  const kind = alarm.source === 'own' ? 'Eigener Text' : topicOption(alarm.topic ?? 'motivation').label;
+  return `${kind} · ${toneOption(alarm.tone).label}`;
+}
+
 /** Listeneintrag eines Alarms mit Zeit, Meta und An/Aus-Schalter. */
 export function AlarmCard({ alarm, onPress, onToggle }: AlarmCardProps) {
   const theme = useTheme();
-  const mood = moodOption(alarm.context.mood);
-  const content = getContentType(alarm.contentType);
 
   return (
     <Pressable
@@ -38,7 +42,7 @@ export function AlarmCard({ alarm, onPress, onToggle }: AlarmCardProps) {
           {alarm.label} · {weekdaysSummary(alarm)}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {mood.emoji} {content.label}
+          {contentSummary(alarm)}
         </ThemedText>
       </View>
       <Switch value={alarm.enabled} onValueChange={onToggle} />

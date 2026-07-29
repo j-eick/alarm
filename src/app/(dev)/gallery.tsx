@@ -13,15 +13,15 @@ import { type ReactNode, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { Chip } from '@/components/chip';
-import { ContentTypePicker } from '@/components/content-type-picker';
-import { MoodPicker } from '@/components/mood-picker';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WeekdayPicker } from '@/components/weekday-picker';
 import { Spacing } from '@/constants/theme';
+import { TONE_OPTIONS } from '@/constants/tones';
+import { TOPIC_OPTIONS } from '@/constants/topics';
 import { type ColorSchemeName, ThemeSchemeContext, useTheme } from '@/hooks/use-theme';
-import type { ContentTypeId, MoodId, Weekday } from '@/types';
+import type { ToneId, TopicId, Weekday } from '@/types';
 
 type Mode = 'system' | 'light' | 'dark';
 
@@ -89,11 +89,11 @@ function GalleryFrame({ toolbar }: { toolbar?: ReactNode }) {
           <Story name="WeekdayPicker">
             <WeekdayDemo />
           </Story>
-          <Story name="MoodPicker">
-            <MoodDemo />
+          <Story name="Töne">
+            <ToneDemo />
           </Story>
-          <Story name="ContentTypePicker">
-            <ContentTypeDemo />
+          <Story name="Themen">
+            <TopicDemo />
           </Story>
         </View>
       </ScrollView>
@@ -200,14 +200,26 @@ function WeekdayDemo() {
   return <WeekdayPicker value={value} onChange={setValue} />;
 }
 
-function MoodDemo() {
-  const [value, setValue] = useState<MoodId>('motivated');
-  return <MoodPicker value={value} onChange={setValue} />;
+function ToneDemo() {
+  const [id, setId] = useState<ToneId>('motivierend');
+  return (
+    <View style={styles.row}>
+      {TONE_OPTIONS.map((t) => (
+        <Chip key={t.id} label={t.label} selected={id === t.id} onPress={() => setId(t.id)} />
+      ))}
+    </View>
+  );
 }
 
-function ContentTypeDemo() {
-  const [value, setValue] = useState<ContentTypeId>('motivationalTalk');
-  return <ContentTypePicker value={value} onChange={setValue} />;
+function TopicDemo() {
+  const [id, setId] = useState<TopicId>('motivation');
+  return (
+    <View style={styles.row}>
+      {TOPIC_OPTIONS.map((t) => (
+        <Chip key={t.id} label={t.label} selected={id === t.id} onPress={() => setId(t.id)} />
+      ))}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
