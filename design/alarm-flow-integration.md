@@ -19,33 +19,36 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[?]` blocked on
 
 ---
 
-## 1 · Data model — [`src/types.ts`](../src/types.ts)
+## 1 · Data model — [`src/types.ts`](../src/types.ts) ✅ (commit `fda9e8c`)
 
-- [ ] Extend `Alarm`: `source: 'own' | 'ai'`, `text: string`, `topic?: TopicId`, `tone: ToneId`, `voice: VoiceId`.
-- [ ] Remove `context.mood` / `contentType` (behalte ggf. `context.note` als optionalen Freitext).
-- [ ] `createAlarmDraft()` defaults für die neuen Felder — [`src/lib/alarm-factory.ts`](../src/lib/alarm-factory.ts).
-- [ ] Storage back-compat: alte persistierte Alarme migrieren/tolerant lesen — [`src/lib/storage.ts`](../src/lib/storage.ts).
+- [x] Extend `Alarm`: `source: 'own' | 'ai'`, `text: string`, `topic?: TopicId`, `tone: ToneId`, `voice: VoiceId`.
+- [x] Remove `context.mood` / `contentType` (`context.note` komplett entfallen — sauberer Schnitt).
+- [x] `createAlarmDraft()` defaults für die neuen Felder — [`src/lib/alarm-factory.ts`](../src/lib/alarm-factory.ts).
+- [x] Storage back-compat: `normalizeAlarm()` liest alte Alarme tolerant — [`src/lib/storage.ts`](../src/lib/storage.ts).
 
-## 2 · Content constants (neue Registries, analog [`moods.ts`](../src/constants/moods.ts))
+## 2 · Content constants (neue Registries) ✅
 
-- [ ] `src/constants/tones.ts` — `ToneId`, Labels, `promptHint` je Ton (die 7 aus §0).
-- [ ] `src/constants/topics.ts` — `TopicId`, Labels für den „Überrasch mich"-Picker.
-- [ ] `moods.ts` + `content-types.ts` nach dem Umbau entfernen/aufräumen.
+- [x] `src/constants/tones.ts` — `ToneId`, Labels, `promptHint` je Ton (die 7 aus §0).
+- [x] `src/constants/topics.ts` — `TopicId`, Labels für den „Überrasch mich"-Picker.
+- [x] `src/constants/voices.ts` — `VoiceId` (3 Stimmen).
+- [x] `moods.ts` + `content-types.ts` + Picker entfernt.
 
 ## 3 · AI layer — [`src/lib/ai/`](../src/lib/ai/)
 
-- [ ] Topic → Text-Generierung (ersetzt den mood/content-type-Prompt).
-- [ ] **Ton** auf Generierung und/oder TTS-Delivery anwenden.
-- [ ] Stimm-**Vorschau**: `elevenlabs-tts` verdrahten, damit Schritt 3 den Entwurf abspielt — [`providers/elevenlabs-tts.ts`](../src/lib/ai/providers/elevenlabs-tts.ts).
+- [x] Topic → Text-Generierung — neue [`prompt.ts`](../src/lib/ai/prompt.ts) ersetzt `content-types.ts`.
+- [x] **Ton** fließt in den System-Prompt (`buildSystemPrompt(tone)`).
+- [ ] Stimm-**Vorschau**: `elevenlabs-tts` verdrahten (voice→voiceId), damit Schritt 3 abspielt — [`providers/elevenlabs-tts.ts`](../src/lib/ai/providers/elevenlabs-tts.ts). → verschoben nach §6.
 
-## 4 · UI flow (Editor-Sheet umbauen)
+## 4 · UI flow (Editor-Sheet)
 
-- [ ] **Step 1 · Quelle** — Source-Picker (`Eigener Text` / `Überrasch mich`).
-- [ ] **Step 2a · Entwurf (own)** — `TextInput`, editierbar; Diktat über die **System-Tastatur** (kein eigener Button).
-- [ ] **Step 2b · Entwurf (ai)** — Topic-Picker + KI-Entwurf + „Neu würfeln".
-- [ ] **Step 3 · Ton & Stimme** — Ton-Selector (7) + Stimme + „Vorhören".
-- [ ] **Step 4 · Zeitplan** — [`WeekdayPicker`](../src/components/weekday-picker.tsx) + Uhrzeit + Speichern.
-- [ ] Step-State + Navigation (Step 2 verzweigt nach Quelle); Drag-to-dismiss-Sheet behalten.
+> **Interim gelandet** (commit `fda9e8c`): Einzel-Sheet mit Quelle → Text/Thema → Ton → Stimme, eigener Text per System-Tastatur-Diktat. Der echte **4-Step-Stepper** steht noch aus.
+
+- [~] **Step 1 · Quelle** — Source-Picker (als Chips im Sheet, noch kein eigener Schritt).
+- [~] **Step 2a · Entwurf (own)** — `TextInput` mit Tastatur-Diktat ✔; ohne Stepper.
+- [ ] **Step 2b · Entwurf (ai)** — Topic-Chips ✔, aber **KI-Entwurf + „Neu würfeln"** fehlt noch.
+- [~] **Step 3 · Ton & Stimme** — Ton- + Stimm-Chips ✔; „Vorhören" fehlt.
+- [ ] **Step 4 · Zeitplan** — Uhrzeit + `WeekdayPicker` (bereits im Sheet vorhanden).
+- [ ] Echter Step-State + Navigation (Step 2 verzweigt nach Quelle); Drag-to-dismiss-Sheet behalten.
 
 ## 5 · Hauptseite / Beispiele — [`index.tsx`](../src/app/index.tsx)
 
