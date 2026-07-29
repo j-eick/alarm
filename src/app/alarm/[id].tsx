@@ -150,7 +150,11 @@ export default function AlarmEditorScreen() {
             </View>
           </GestureDetector>
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
             {/* Uhrzeit */}
             <Section title="Uhrzeit">
               <Pressable onPress={() => setShowPicker((s) => !s)}>
@@ -277,7 +281,16 @@ const styles = StyleSheet.create({
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: -OVERSHOOT_PAD },
   handleZone: { alignItems: 'center', paddingTop: Spacing.two, paddingBottom: Spacing.one },
   grabber: { width: 40, height: 5, borderRadius: 3, opacity: 0.4 },
-  content: { paddingHorizontal: Spacing.four, paddingTop: Spacing.two, gap: Spacing.four },
+  // flex:1 begrenzt die ScrollView-Höhe zwischen Griff und Aktionsleiste — sonst
+  // wächst sie auf Inhaltshöhe und lässt sich nicht scrollen (untere Sektionen
+  // werden abgeschnitten).
+  scroll: { flex: 1 },
+  content: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.four,
+    gap: Spacing.four,
+  },
   section: { gap: Spacing.two },
   time: { fontSize: 56, fontWeight: '700', lineHeight: 62 },
   input: {
