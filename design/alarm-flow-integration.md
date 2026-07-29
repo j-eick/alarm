@@ -5,49 +5,60 @@ Prototype: [alarm-creation-flow.html](./alarm-creation-flow.html). Current edito
 
 Status legend: `[ ]` todo · `[~]` in progress · `[x]` done · `[?]` blocked on a decision.
 
+> **Zwei Dreiergruppen nicht verwechseln:**
+> - **WAKE_EXAMPLES** ([showcase.ts](../src/constants/showcase.ts)) — The Rock / Elsa singt / Dein Tag — Hauptseite, illustrativ. **Keeper**, sollen den Create-Flow vorbefüllen.
+> - **CONTENT_TYPES** ([content-types.ts](../src/lib/ai/content-types.ts)) — Motivational Talk / Affirmation / Tages-Fokus — nur im Editor. **Werden entfernt** (sauberer Schnitt).
+
 ---
 
-## 0 · Decisions (blockers — resolve first)
+## 0 · Decisions — RESOLVED
 
-- [?] **Tone list** — final set of tones (mockup uses `Sanft · Energetisch · Dramatisch · Trocken · Streng` as placeholders).
-- [?] **Retire mood + content-type?** — new model is `topic + tone`; confirm the 11 moods + 3 content types go away (drives the data-model change below).
-- [?] **Dictation approach** — start with the **native keyboard mic** on a `TextInput` (zero-dep, works in the simulator) vs. a real in-app STT service (later).
+- [x] **Tone list** — final 7: `Sanft · Fröhlich · Energetisch · Motivierend · Dramatisch · Trocken · Streng`.
+- [x] **Retire mood + content-type** — ja, sauberer Schnitt: `context.mood` + `contentType` raus, neues Modell `topic + tone`.
+- [x] **Dictation** — natives **Tastatur-Mikro** auf `TextInput` (kein Dev-Build, bleibt in Expo Go). Kein In-App-Aufnahme-Button. Testen auf **echtem Gerät via Expo Go** (iOS-Simulator zeigt keine Diktier-Taste).
 
 ---
 
 ## 1 · Data model — [`src/types.ts`](../src/types.ts)
 
 - [ ] Extend `Alarm`: `source: 'own' | 'ai'`, `text: string`, `topic?: TopicId`, `tone: ToneId`, `voice: VoiceId`.
-- [ ] Decide fate of `context.mood` / `context.note` / `contentType` (remove or keep alongside).
-- [ ] `createAlarmDraft()` defaults for the new fields — [`src/lib/alarm-factory.ts`](../src/lib/alarm-factory.ts).
-- [ ] Storage back-compat: migrate/relax old persisted alarms — [`src/lib/storage.ts`](../src/lib/storage.ts).
+- [ ] Remove `context.mood` / `contentType` (behalte ggf. `context.note` als optionalen Freitext).
+- [ ] `createAlarmDraft()` defaults für die neuen Felder — [`src/lib/alarm-factory.ts`](../src/lib/alarm-factory.ts).
+- [ ] Storage back-compat: alte persistierte Alarme migrieren/tolerant lesen — [`src/lib/storage.ts`](../src/lib/storage.ts).
 
-## 2 · Content constants (new registries, mirror [`moods.ts`](../src/constants/moods.ts))
+## 2 · Content constants (neue Registries, analog [`moods.ts`](../src/constants/moods.ts))
 
-- [ ] `src/constants/tones.ts` — `ToneId`, labels, `promptHint` per tone.
-- [ ] `src/constants/topics.ts` — `TopicId`, labels for the "Überrasch mich" picker.
+- [ ] `src/constants/tones.ts` — `ToneId`, Labels, `promptHint` je Ton (die 7 aus §0).
+- [ ] `src/constants/topics.ts` — `TopicId`, Labels für den „Überrasch mich"-Picker.
+- [ ] `moods.ts` + `content-types.ts` nach dem Umbau entfernen/aufräumen.
 
 ## 3 · AI layer — [`src/lib/ai/`](../src/lib/ai/)
 
-- [ ] Topic → text generation path (parallel to the current mood/content-type prompt).
-- [ ] Apply **tone** to generation and/or TTS delivery.
-- [ ] Voice **preview**: wire `elevenlabs-tts` so step 3 can play the draft — [`providers/elevenlabs-tts.ts`](../src/lib/ai/providers/elevenlabs-tts.ts).
+- [ ] Topic → Text-Generierung (ersetzt den mood/content-type-Prompt).
+- [ ] **Ton** auf Generierung und/oder TTS-Delivery anwenden.
+- [ ] Stimm-**Vorschau**: `elevenlabs-tts` verdrahten, damit Schritt 3 den Entwurf abspielt — [`providers/elevenlabs-tts.ts`](../src/lib/ai/providers/elevenlabs-tts.ts).
 
-## 4 · UI flow (rework the editor sheet)
+## 4 · UI flow (Editor-Sheet umbauen)
 
-- [ ] **Step 1 · Quelle** — source picker (`Eigener Text` / `Überrasch mich`).
-- [ ] **Step 2a · Entwurf (own)** — `TextInput` + keyboard-mic dictation, editable.
-- [ ] **Step 2b · Entwurf (ai)** — topic picker + AI draft + „Neu würfeln" (regenerate).
-- [ ] **Step 3 · Ton & Stimme** — tone selector (new axis) + voice + „Vorhören" preview.
-- [ ] **Step 4 · Zeitplan** — reuse [`WeekdayPicker`](../src/components/weekday-picker.tsx) + time + save.
-- [ ] Step state + navigation (branch step 2 on the chosen source); keep the existing drag-to-dismiss sheet.
+- [ ] **Step 1 · Quelle** — Source-Picker (`Eigener Text` / `Überrasch mich`).
+- [ ] **Step 2a · Entwurf (own)** — `TextInput`, editierbar; Diktat über die **System-Tastatur** (kein eigener Button).
+- [ ] **Step 2b · Entwurf (ai)** — Topic-Picker + KI-Entwurf + „Neu würfeln".
+- [ ] **Step 3 · Ton & Stimme** — Ton-Selector (7) + Stimme + „Vorhören".
+- [ ] **Step 4 · Zeitplan** — [`WeekdayPicker`](../src/components/weekday-picker.tsx) + Uhrzeit + Speichern.
+- [ ] Step-State + Navigation (Step 2 verzweigt nach Quelle); Drag-to-dismiss-Sheet behalten.
 
-## 5 · Polish & verification
+## 5 · Hauptseite / Beispiele — [`index.tsx`](../src/app/index.tsx)
 
-- [ ] Add the new tone chips / flow steps to the dev gallery — [`src/app/(dev)/gallery.tsx`](../src/app/(dev)/gallery.tsx).
-- [ ] Loading + error states for generation and TTS.
-- [ ] `npx tsc --noEmit` clean; walk the full flow in the iOS simulator.
+- [ ] **WAKE_EXAMPLES befüllen den Create-Flow vor** statt leerem `goCreate()` (Stimme/Ton/Thema als Params).
+- [ ] Kacheln tragen ihre Facetten sichtbar (Stimme + Ton + Thema), damit die „Zutaten" ablesbar sind.
+- [ ] Leerzustand als Bandbreiten-Showcase behalten; kompakte „VORSCHLÄGE"-Reihe bei vorhandenen Weckern behalten.
+
+## 6 · Polish & verification
+
+- [ ] Neue Ton-Chips / Flow-Schritte in die Dev-Gallery — [`src/app/(dev)/gallery.tsx`](../src/app/(dev)/gallery.tsx).
+- [ ] Loading- + Error-States für Generierung und TTS.
+- [ ] `npx tsc --noEmit` clean; ganzen Flow auf echtem Gerät (Diktat!) + Simulator durchspielen.
 
 ---
 
-**Suggested order:** `0 → 1 → 2 → 3 → 4 → 5`. Steps 1–3 can land behind the current editor before the UI rework, so the model + AI are ready when the screens go in.
+**Suggested order:** `1 → 2 → 3 → 5 → 4 → 6`. Modell/Konstanten/KI (1–3) und die Hauptseiten-Anbindung (5) können vor dem UI-Umbau (4) landen.
