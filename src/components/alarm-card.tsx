@@ -20,10 +20,18 @@ function weekdaysSummary(alarm: Alarm): string {
   return alarm.weekdays.map((d) => WEEKDAY_LABELS[d]).join(' · ');
 }
 
-/** Kurzbeschreibung des Weck-Inhalts: Quelle (bzw. Thema) + Ton. */
-function contentSummary(alarm: Alarm): string {
-  const kind = alarm.source === 'own' ? 'Eigener Text' : topicOption(alarm.topic ?? 'motivation').label;
-  return `${kind} · ${toneOption(alarm.tone).label}`;
+/** Woher der Inhalt stammt — kurz für die Karte. */
+function kindLabel(alarm: Alarm): string {
+  if (alarm.source === 'verbatim') return 'Eigener Text';
+  switch (alarm.aiBasis) {
+    case 'text':
+      return 'KI · eigener Text';
+    case 'source':
+      return 'KI · Quelle';
+    case 'topic':
+    default:
+      return `KI · ${topicOption(alarm.topic ?? 'motivation').label}`;
+  }
 }
 
 /** Listeneintrag eines Alarms mit Zeit, Meta und An/Aus-Schalter. */
@@ -42,7 +50,7 @@ export function AlarmCard({ alarm, onPress, onToggle }: AlarmCardProps) {
           {alarm.label} · {weekdaysSummary(alarm)}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {contentSummary(alarm)}
+          {kindLabel(alarm)} · {toneOption(alarm.tone).label}
         </ThemedText>
       </View>
       <Switch value={alarm.enabled} onValueChange={onToggle} />

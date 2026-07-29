@@ -12,11 +12,12 @@ import { DEFAULT_TONE } from '@/constants/tones';
 import { DEFAULT_TOPIC } from '@/constants/topics';
 import { DEFAULT_VOICE } from '@/constants/voices';
 import { createId } from '@/lib/id';
-import type { Alarm, GeneratedContent, ToneId, TopicId, VoiceId, Weekday } from '@/types';
+import type { AiBasis, Alarm, AlarmSource, GeneratedContent, ToneId, TopicId, VoiceId, Weekday } from '@/types';
 
 const KEYS = {
   alarms: 'aod:alarms',
   content: (alarmId: string) => `aod:content:${alarmId}`,
+  linkConsent: 'aod:linkConsentAccepted',
 } as const;
 
 /** Liest und parst einen JSON-Wert; gibt `fallback` bei fehlendem/kaputtem Wert. */
@@ -35,12 +36,17 @@ async function writeJson(key: string, value: unknown): Promise<void> {
 
 /**
  * Normalisiert einen (evtl. alten) persistierten Alarm auf das aktuelle Modell.
- * Alte Alarme hatten `context`/`contentType` statt `source`/`text`/`topic`/
- * `tone`/`voice` — fehlende Felder werden mit Defaults aufgefüllt, damit die
- * App nach dem Umstieg auf `topic + tone` nicht an Altdaten scheitert.
+ * Migration: das frühere `source: 'own'` wird zu `'verbatim'`; fehlende
+ * Felder (aiBasis/topic/…) werden mit Defaults aufgefüllt.
  */
 function normalizeAlarm(input: unknown): Alarm {
   const r = (input ?? {}) as Record<string, unknown>;
+  const rawSource = r.source;
+  const source: AlarmSource = rawSource === 'verbatim' || rawSource === 'own' ? 'verbatim' : 'ai';
+  const rawBasis = r.aiBasis;
+  const aiBasis: AiBasis =
+    rawBasis === 'text' || rawBasis === 'source' ? rawBasis : 'topic';
+
   return {
     id: typeof r.id === 'string' ? r.id : createId(),
     hour: typeof r.hour === 'number' ? r.hour : 7,
@@ -48,11 +54,14 @@ function normalizeAlarm(input: unknown): Alarm {
     weekdays: Array.isArray(r.weekdays) ? (r.weekdays as Weekday[]) : [1, 2, 3, 4, 5],
     label: typeof r.label === 'string' ? r.label : 'Wecker',
     enabled: r.enabled !== false,
-    source: r.source === 'own' ? 'own' : 'ai',
+    source,
     text: typeof r.text === 'string' ? r.text : '',
-    topic: typeof r.topic === 'string' ? (r.topic as TopicId) : DEFAULT_TOPIC,
     tone: typeof r.tone === 'string' ? (r.tone as ToneId) : DEFAULT_TONE,
     voice: typeof r.voice === 'string' ? (r.voice as VoiceId) : DEFAULT_VOICE,
+    aiBasis,
+    topic: typeof r.topic === 'string' ? (r.topic as TopicId) : DEFAULT_TOPIC,
+    basisText: typeof r.basisText === 'string' ? r.basisText : undefined,
+    sourceUrl: typeof r.sourceUrl === 'string' ? r.sourceUrl : undefined,
     scheduledIds: Array.isArray(r.scheduledIds) ? (r.scheduledIds as string[]) : [],
   };
 }
@@ -83,5 +92,18 @@ export const contentRepo = {
 
   async remove(alarmId: string): Promise<void> {
     await AsyncStorage.removeItem(KEYS.content(alarmId));
+  },
+};
+
+// --- App-Einstellungen ------------------------------------------------------
+
+export const settingsRepo = {
+  /** Hat der Nutzer den Eigenverantwortungs-Hinweis zur externen Quelle akzeptiert? */
+  async getLinkConsent(): Promise<boolean> {
+    return (await AsyncStorage.getItem(KEYS.linkConsent)) === 'true';
+  },
+
+  async setLinkConsent(accepted: boolean): Promise<void> {
+    await AsyncStorage.setItem(KEYS.linkConsent, accepted ? 'true' : 'false');
   },
 };

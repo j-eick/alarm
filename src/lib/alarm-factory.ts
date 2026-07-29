@@ -16,9 +16,10 @@ export function createAlarmDraft(): Alarm {
     enabled: true,
     source: 'ai',
     text: '',
-    topic: DEFAULT_TOPIC,
     tone: DEFAULT_TONE,
     voice: DEFAULT_VOICE,
+    aiBasis: 'topic',
+    topic: DEFAULT_TOPIC,
     scheduledIds: [],
   };
 }

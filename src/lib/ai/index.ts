@@ -1,45 +1,59 @@
 /**
  * KI-Orchestrator: erzeugt aus einem Alarm den Weck-Inhalt (Text + optional Audio).
  *
- * Öffentliche Schnittstelle der gesamten KI-Schicht. Bei `source: 'own'` wird der
- * Text des Nutzers direkt verwendet; bei `source: 'ai'` schreibt Claude (bzw. der
- * Mock) aus Thema + Ton. Danach optional Cloud-TTS. UI ruft nur `generateWakeContent`.
+ * `generateWakeText` liefert nur den Text (für „Vorhören"/„Neu würfeln"),
+ * `generateWakeContent` zusätzlich optionales Cloud-TTS-Audio. Bei
+ * `source: 'verbatim'` wird der Text des Nutzers direkt genutzt; bei `'ai'`
+ * schreibt Claude (bzw. der Mock) aus der jeweiligen `aiBasis`.
  */
 
 import type { Alarm, GeneratedContent } from '@/types';
 
 import { hasTextKey, hasTtsKey } from './config';
+import { ingestSource } from './ingest-source';
 import { buildSystemPrompt, buildUserPrompt, mockWakeText } from './prompt';
 import { claudeTextProvider } from './providers/claude-text';
 import { elevenLabsTtsProvider } from './providers/elevenlabs-tts';
 import { mockTextProvider } from './providers/mock-text';
 import type { TextRequest } from './providers/types';
 
-export async function generateWakeContent(alarm: Alarm): Promise<GeneratedContent> {
-  let text: string;
-  let source: GeneratedContent['source'];
+export interface WakeText {
+  text: string;
+  source: GeneratedContent['source'];
+}
 
-  if (alarm.source === 'own') {
-    // Eigener Text — keine Generierung nötig.
-    text = alarm.text.trim();
-    source = 'user';
-  } else {
-    // KI-Text aus Thema + Ton; Claude wenn Key vorhanden, sonst/​bei Fehler Mock.
-    const req: TextRequest = {
-      systemPrompt: buildSystemPrompt(alarm.tone),
-      userPrompt: buildUserPrompt(alarm.topic),
-      maxTokens: 400,
-      fallbackText: mockWakeText(alarm),
-    };
-    try {
-      if (!hasTextKey()) throw new Error('no-key');
-      text = await claudeTextProvider.generate(req);
-      source = 'claude';
-    } catch {
-      text = await mockTextProvider.generate(req);
-      source = 'mock';
-    }
+/**
+ * Nur der Text. Kann werfen, wenn eine externe Quelle (`aiBasis: 'source'`)
+ * nicht eingelesen werden kann — Aufrufer sollten das dem Nutzer zeigen.
+ */
+export async function generateWakeText(alarm: Alarm): Promise<WakeText> {
+  if (alarm.source === 'verbatim') {
+    return { text: alarm.text.trim(), source: 'user' };
   }
+
+  // Externe Quelle ggf. zuerst einlesen (wirft bei Fehler).
+  let sourceContent: string | undefined;
+  if (alarm.aiBasis === 'source') {
+    sourceContent = await ingestSource(alarm.sourceUrl ?? '');
+  }
+
+  const req: TextRequest = {
+    systemPrompt: buildSystemPrompt(alarm.tone),
+    userPrompt: buildUserPrompt(alarm, sourceContent),
+    maxTokens: 400,
+    fallbackText: mockWakeText(alarm),
+  };
+
+  try {
+    if (!hasTextKey()) throw new Error('no-key');
+    return { text: await claudeTextProvider.generate(req), source: 'claude' };
+  } catch {
+    return { text: await mockTextProvider.generate(req), source: 'mock' };
+  }
+}
+
+export async function generateWakeContent(alarm: Alarm): Promise<GeneratedContent> {
+  const { text, source } = await generateWakeText(alarm);
 
   // Audio — Cloud-TTS nur mit Key und wenn Text vorhanden; Fehler unkritisch (Geräte-TTS greift).
   let audioUri: string | null = null;

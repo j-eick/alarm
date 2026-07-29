@@ -73,7 +73,7 @@ export default function AlarmListScreen() {
             )
           }
         />
-        <PrimaryButton title="+ Neuer Wecker" onPress={goCreate} style={styles.addButton} />
+        <PrimaryButton title="Weckton erstellen" onPress={goCreate} style={styles.addButton} />
       </SafeAreaView>
     </ThemedView>
   );

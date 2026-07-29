@@ -23,11 +23,20 @@ export const WEEKDAY_LABELS: Record<Weekday, string> = {
 };
 
 /**
- * Woher der Weck-Text kommt:
- *  - `own` → der Nutzer tippt/diktiert ihn selbst.
- *  - `ai`  → die KI schreibt ihn aus einem gewählten Thema.
+ * Wie der Weck-Text zur Laufzeit entsteht:
+ *  - `verbatim` → der eingegebene Text wird 1:1 vorgelesen (keine KI).
+ *  - `ai`       → die KI erzeugt den Text (Grundlage siehe `aiBasis`).
  */
-export type AlarmSource = 'own' | 'ai';
+export type AlarmSource = 'verbatim' | 'ai';
+
+/**
+ * Woraus die KI schöpft (nur bei `source: 'ai'`):
+ *  - `topic`  → vordefiniertes Thema.
+ *  - `text`   → eigener Text als Inspiration; die KI erfasst Emotion + Semantik
+ *               und verstärkt sie leicht.
+ *  - `source` → externe Quelle (Text/Link), die die KI zu einem Szenario verarbeitet.
+ */
+export type AiBasis = 'topic' | 'text' | 'source';
 
 /** Sprech-Ton (Delivery-Stil). Registry: `constants/tones.ts`. */
 export type ToneId =
@@ -57,16 +66,23 @@ export interface Alarm {
   label: string;
   enabled: boolean;
 
-  /** Quelle des Weck-Texts. */
+  /** Wie der Weck-Text entsteht. */
   source: AlarmSource;
-  /** Der Weck-Text. Bei `own` vom Nutzer; bei `ai` das (zuletzt) generierte Ergebnis. */
+  /** Der (zuletzt) vorzulesende Text. Bei `verbatim` der Eingabetext selbst. */
   text: string;
-  /** Nur bei `source: 'ai'` relevant: Thema, aus dem die KI schreibt. */
-  topic?: TopicId;
   /** Sprech-Ton — unabhängig vom Inhalt. */
   tone: ToneId;
   /** Stimme für die Sprachausgabe. */
   voice: VoiceId;
+
+  /** Grundlage der KI-Generierung (nur bei `source: 'ai'`). */
+  aiBasis?: AiBasis;
+  /** Thema (bei `aiBasis: 'topic'`). */
+  topic?: TopicId;
+  /** Eigener Text als KI-Inspiration (bei `aiBasis: 'text'`). */
+  basisText?: string;
+  /** Externe Quelle: URL oder eingefügter Text (bei `aiBasis: 'source'`). */
+  sourceUrl?: string;
 
   /** IDs der geplanten Notifications (eine pro Wochentag). Vom Scheduler gesetzt. */
   scheduledIds: string[];
