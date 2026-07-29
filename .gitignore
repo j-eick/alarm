@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Graphify knowledge-graph output (generated; regenerate with `graphify update .`)
+graphify-out/
