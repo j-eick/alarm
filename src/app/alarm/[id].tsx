@@ -21,9 +21,9 @@ import { ThemedText } from '@/components/themed-text';
 import { WeekdayPicker } from '@/components/weekday-picker';
 import { PRESET_OPTIONS, presetOption } from '@/constants/presets';
 import { Spacing } from '@/constants/theme';
-import { TONE_OPTIONS } from '@/constants/tones';
-import { TOPIC_OPTIONS } from '@/constants/topics';
-import { VOICE_OPTIONS } from '@/constants/voices';
+import { TONE_OPTIONS, toneOption } from '@/constants/tones';
+import { TOPIC_OPTIONS, topicOption } from '@/constants/topics';
+import { VOICE_OPTIONS, voiceOption } from '@/constants/voices';
 import { useTheme } from '@/hooks/use-theme';
 import { useAlarms } from '@/hooks/use-alarms';
 import { generateWakeText } from '@/lib/ai';
@@ -45,6 +45,33 @@ type Mode = 'preset' | 'ki';
 
 const KI_FLOW: Step[] = ['how', 'basis', 'toneVoice', 'schedule'];
 const PRESET_FLOW: Step[] = ['how', 'preset', 'schedule'];
+
+/**
+ * Subtile Zusammenfassung der bereits getroffenen Entscheidungen — wird unter
+ * den Statusbalken angezeigt, damit der Nutzer in Folgeschritten sieht, worauf
+ * seine Auswahl basiert (Thema/eigener Text/Quelle, dann Ton & Stimme).
+ */
+function decisionCrumbs(step: Step, draft: Alarm): string[] {
+  const basisLabel = (): string => {
+    if (draft.source === 'verbatim') return 'Eigener Text';
+    switch (draft.aiBasis) {
+      case 'text':
+        return 'Eigener Text · KI';
+      case 'source':
+        return 'Quelle';
+      case 'topic':
+      default:
+        return `Thema · ${topicOption(draft.topic ?? 'motivation').label}`;
+    }
+  };
+  const out: string[] = [];
+  if (step === 'toneVoice' || step === 'schedule') out.push(basisLabel());
+  if (step === 'schedule') {
+    out.push(`Ton · ${toneOption(draft.tone).label}`);
+    out.push(`Stimme · ${voiceOption(draft.voice).label}`);
+  }
+  return out;
+}
 
 /** Kleiner Abschnittstitel. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -190,6 +217,7 @@ export default function AlarmEditorScreen() {
 
   const flow = mode === 'preset' ? PRESET_FLOW : KI_FLOW;
   const stepIndex = Math.max(0, flow.indexOf(step));
+  const crumbs = decisionCrumbs(step, draft);
 
   const goNext = () => {
     const next = flow[stepIndex + 1];
@@ -279,6 +307,18 @@ export default function AlarmEditorScreen() {
               ))}
             </View>
           </View>
+
+          {crumbs.length > 0 && (
+            <View style={styles.crumbs}>
+              {crumbs.map((c) => (
+                <View key={c} style={[styles.crumb, { backgroundColor: theme.backgroundElement }]}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {c}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          )}
 
           <ScrollView
             style={styles.scroll}
@@ -590,8 +630,12 @@ const styles = StyleSheet.create({
   back: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   progress: { flexDirection: 'row', gap: 5, flex: 1 },
   progressSeg: { height: 4, flex: 1, borderRadius: 2 },
+  // Entscheidungs-Zusammenfassung unter den Statusbalken; paddingBottom schafft
+  // bewusst Abstand zur Kategorieüberschrift.
+  crumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, paddingHorizontal: Spacing.four, paddingTop: Spacing.one, paddingBottom: Spacing.three },
+  crumb: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: Spacing.four, paddingTop: Spacing.two, paddingBottom: Spacing.four, gap: Spacing.three },
+  content: { paddingHorizontal: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.four, gap: Spacing.three },
   stepTitle: { fontSize: 22, fontWeight: '700', lineHeight: 28, marginBottom: Spacing.one },
   section: { gap: Spacing.two },
   card: {
