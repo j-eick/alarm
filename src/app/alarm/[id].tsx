@@ -141,7 +141,8 @@ export default function AlarmEditorScreen() {
           sofort verschwindet. Tippen schließt. */}
       <AnimatedPressable style={[styles.backdrop, backdropStyle]} onPress={animateClose} />
 
-      <Animated.View style={[styles.sheetWrap, { top: topGap }, sheetStyle]}>
+      <Animated.View
+        style={[styles.sheetWrap, { top: topGap, height: SCREEN_H - topGap + OVERSHOOT_PAD }, sheetStyle]}>
         <SheetSurface>
           {/* Griff zum Herunterziehen (Pan-Geste). */}
           <GestureDetector gesture={dragGesture}>
@@ -276,9 +277,11 @@ export default function AlarmEditorScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.18)' },
-  // Absolut positioniert und unten über den Rand hinaus (bottom: -OVERSHOOT_PAD),
-  // damit der Überschwung beim Einfahren den Backdrop nie freilegt.
-  sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: -OVERSHOOT_PAD },
+  // Absolut positioniert mit EXPLIZITER Höhe (nicht via bottom): so ist die
+  // Höhe unabhängig davon definit, ob der Modal-Container eine feste Höhe hat —
+  // sonst bekommt die ScrollView keine Grenze und scrollt nicht. Die Höhe ragt
+  // um OVERSHOOT_PAD unter den Rand, damit der Überschwung den Backdrop nie freilegt.
+  sheetWrap: { position: 'absolute', left: 0, right: 0 },
   handleZone: { alignItems: 'center', paddingTop: Spacing.two, paddingBottom: Spacing.one },
   grabber: { width: 40, height: 5, borderRadius: 3, opacity: 0.4 },
   // flex:1 begrenzt die ScrollView-Höhe zwischen Griff und Aktionsleiste — sonst
