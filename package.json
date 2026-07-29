@@ -1,7 +1,7 @@
 {
   "name": "alarm-on-drugs",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
