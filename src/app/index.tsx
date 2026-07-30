@@ -1,5 +1,7 @@
 import { router } from 'expo-router';
+import { useCallback, useRef } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AlarmCard } from '@/components/alarm-card';
@@ -14,13 +16,23 @@ import { WAKE_EXAMPLES } from '@/constants/showcase';
 import { useAlarms } from '@/hooks/use-alarms';
 
 export default function AlarmListScreen() {
-  const { alarms, loading, toggleAlarm } = useAlarms();
+  const { alarms, loading, toggleAlarm, deleteAlarm } = useAlarms();
   const hasAlarms = alarms.length > 0;
+
+  const openSwipeableRef = useRef<Swipeable | null>(null);
 
   const goCreate = () => router.push({ pathname: '/alarm/[id]', params: { id: 'new' } });
 
+  const closeOpenSwipeable = useCallback(() => {
+    openSwipeableRef.current?.close();
+    openSwipeableRef.current = null;
+  }, []);
+
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} onStartShouldSetResponderCapture={() => {
+      closeOpenSwipeable();
+      return false;
+    }}>
       <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
         <FlatList
           data={alarms}
@@ -49,13 +61,26 @@ export default function AlarmListScreen() {
               )}
             </View>
           }
-          renderItem={({ item }) => (
-            <AlarmCard
-              alarm={item}
-              onPress={() => router.push({ pathname: '/alarm/[id]', params: { id: item.id } })}
-              onToggle={(enabled) => void toggleAlarm(item.id, enabled)}
-            />
-          )}
+          renderItem={({ item }) => {
+            let swipeableInstance: Swipeable | null = null;
+            return (
+              <AlarmCard
+                ref={(instance) => {
+                  swipeableInstance = instance;
+                }}
+                alarm={item}
+                onPress={() => router.push({ pathname: '/alarm/[id]', params: { id: item.id } })}
+                onToggle={(enabled) => void toggleAlarm(item.id, enabled)}
+                onDelete={() => void deleteAlarm(item.id)}
+                onSwipeableWillOpen={() => {
+                  if (openSwipeableRef.current && openSwipeableRef.current !== swipeableInstance) {
+                    openSwipeableRef.current.close();
+                  }
+                  openSwipeableRef.current = swipeableInstance;
+                }}
+              />
+            );
+          }}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.three }} />}
           ListEmptyComponent={
             loading ? null : (
