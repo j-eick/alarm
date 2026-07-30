@@ -22,6 +22,9 @@ export default function AlarmListScreen() {
   const openSwipeableRef = useRef<Swipeable | null>(null);
 
   const goCreate = () => router.push({ pathname: '/alarm/[id]', params: { id: 'new' } });
+  /** Suggestion tiles skip straight to scheduling — no source/tone picking yet. */
+  const goCreateFromExample = () =>
+    router.push({ pathname: '/alarm/[id]', params: { id: 'new', step: 'schedule' } });
 
   const closeOpenSwipeable = useCallback(() => {
     openSwipeableRef.current?.close();
@@ -48,7 +51,7 @@ export default function AlarmListScreen() {
                   </ThemedText>
                   <View style={styles.compactRow}>
                     {WAKE_EXAMPLES.map((ex) => (
-                      <ExampleTileCompact key={ex.id} example={ex} onPress={goCreate} />
+                      <ExampleTileCompact key={ex.id} example={ex} onPress={goCreateFromExample} />
                     ))}
                   </View>
                   <ThemedText
@@ -91,7 +94,7 @@ export default function AlarmListScreen() {
                 </ThemedText>
                 <View style={styles.tiles}>
                   {WAKE_EXAMPLES.map((ex) => (
-                    <ExampleTile key={ex.id} example={ex} onPress={goCreate} />
+                    <ExampleTile key={ex.id} example={ex} onPress={goCreateFromExample} />
                   ))}
                 </View>
               </View>
