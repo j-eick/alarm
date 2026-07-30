@@ -9,11 +9,13 @@
 
 import type { Alarm, GeneratedContent } from '@/types';
 
+import { toneOption } from '@/constants/tones';
+
 import { hasTextKey, hasTtsKey } from './config';
 import { ingestSource } from './ingest-source';
 import { buildSystemPrompt, buildUserPrompt, mockWakeText } from './prompt';
 import { claudeTextProvider } from './providers/claude-text';
-import { elevenLabsTtsProvider } from './providers/elevenlabs-tts';
+import { fishAudioTtsProvider } from './providers/fish-audio-tts';
 import { mockTextProvider } from './providers/mock-text';
 import type { TextRequest } from './providers/types';
 
@@ -59,7 +61,10 @@ export async function generateWakeContent(alarm: Alarm): Promise<GeneratedConten
   let audioUri: string | null = null;
   if (hasTtsKey() && text.length > 0) {
     try {
-      audioUri = await elevenLabsTtsProvider.synthesize(text);
+      audioUri = await fishAudioTtsProvider.synthesize(text, {
+        voice: alarm.voice,
+        speed: toneOption(alarm.tone).ttsSpeed,
+      });
     } catch {
       audioUri = null;
     }

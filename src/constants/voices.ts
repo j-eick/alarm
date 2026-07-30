@@ -9,7 +9,7 @@ export interface VoiceOption {
 
 /**
  * Auswählbare Stimmen für die Sprachausgabe. Die Zuordnung zur konkreten
- * TTS-Anbieter-Stimme (z.B. ElevenLabs `voiceId`) passiert später in der
+ * TTS-Anbieter-Stimme (z.B. Fish Audio `reference_id`) passiert später in der
  * KI-Schicht; hier bleibt die Auswahl provider-unabhängig.
  */
 export const VOICE_OPTIONS: VoiceOption[] = [

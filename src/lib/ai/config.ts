@@ -19,11 +19,11 @@ export const aiConfig = {
     baseUrl: env.EXPO_PUBLIC_ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com/v1/messages',
     maxTokens: 400,
   },
-  /** Cloud-TTS (ElevenLabs als Beispiel-Anbieter). */
+  /** Cloud-TTS (Fish Audio). */
   tts: {
-    apiKey: env.EXPO_PUBLIC_ELEVENLABS_API_KEY ?? '',
-    voiceId: env.EXPO_PUBLIC_ELEVENLABS_VOICE_ID ?? '21m00Tcm4TlvDq8ikWAM',
-    baseUrl: env.EXPO_PUBLIC_ELEVENLABS_BASE_URL ?? 'https://api.elevenlabs.io/v1/text-to-speech',
+    apiKey: env.EXPO_PUBLIC_FISHAUDIO_API_KEY ?? '',
+    model: env.EXPO_PUBLIC_FISHAUDIO_MODEL ?? 's2.1-pro-free',
+    baseUrl: env.EXPO_PUBLIC_FISHAUDIO_BASE_URL ?? 'https://api.fish.audio/v1/tts',
   },
 } as const;
 

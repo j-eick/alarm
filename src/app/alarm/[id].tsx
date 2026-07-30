@@ -1,7 +1,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import * as Speech from 'expo-speech';
 import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -26,8 +25,9 @@ import { TOPIC_OPTIONS, topicOption } from '@/constants/topics';
 import { VOICE_OPTIONS, voiceOption } from '@/constants/voices';
 import { useTheme } from '@/hooks/use-theme';
 import { useAlarms } from '@/hooks/use-alarms';
-import { generateWakeText } from '@/lib/ai';
+import { generateWakeContent } from '@/lib/ai';
 import { createAlarmDraft } from '@/lib/alarm-factory';
+import { playWake, stopWake } from '@/lib/audio';
 import { settingsRepo } from '@/lib/storage';
 import { dateFromHourMinute, formatTime } from '@/lib/time';
 import type { AiBasis, Alarm } from '@/types';
@@ -120,7 +120,7 @@ export default function AlarmEditorScreen() {
   // Sprachausgabe beim Verlassen stoppen.
   useEffect(() => {
     return () => {
-      void Speech.stop();
+      stopWake();
     };
   }, []);
 
@@ -136,7 +136,7 @@ export default function AlarmEditorScreen() {
 
   const close = () => router.back();
   const animateClose = () => {
-    Speech.stop();
+    stopWake();
     backdropOpacity.value = withTiming(0, { duration: 220 });
     translateY.value = withTiming(SCREEN_H, { duration: 220 }, (finished) => {
       if (finished) runOnJS(close)();
@@ -197,15 +197,15 @@ export default function AlarmEditorScreen() {
   const preview = async () => {
     setGenError(null);
     setGenerating(true);
-    Speech.stop();
+    stopWake();
     try {
-      const { text } = await generateWakeText(draft);
-      if (draft.source === 'ai') patch({ text });
-      if (!text.trim()) {
+      const content = await generateWakeContent(draft);
+      if (draft.source === 'ai') patch({ text: content.text });
+      if (!content.text.trim()) {
         setGenError('Kein Text vorhanden.');
         return;
       }
-      Speech.speak(text, { language: 'de-DE' });
+      await playWake(content);
     } catch (e) {
       setGenError(e instanceof Error ? e.message : 'Konnte nicht generieren.');
     } finally {
