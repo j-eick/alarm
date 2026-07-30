@@ -47,33 +47,33 @@ const KI_FLOW: Step[] = ['how', 'basis', 'toneVoice', 'schedule'];
 const PRESET_FLOW: Step[] = ['how', 'preset', 'schedule'];
 
 /**
- * Subtile Zusammenfassung der bereits getroffenen Entscheidungen — wird unter
- * den Statusbalken angezeigt, damit der Nutzer in Folgeschritten sieht, worauf
- * seine Auswahl basiert (Thema/eigener Text/Quelle, dann Ton & Stimme).
+ * Subtle summary of the decisions already made — shown below the progress
+ * bar so the user can see, in later steps, what their selection is based on
+ * (topic/own text/source, then tone & voice).
  */
 function decisionCrumbs(step: Step, draft: Alarm): string[] {
   const basisLabel = (): string => {
-    if (draft.source === 'verbatim') return 'Eigener Text';
+    if (draft.source === 'verbatim') return 'Own text';
     switch (draft.aiBasis) {
       case 'text':
-        return 'Eigener Text · KI';
+        return 'Own text · AI';
       case 'source':
-        return 'Quelle';
+        return 'Source';
       case 'topic':
       default:
-        return `Thema · ${topicOption(draft.topic ?? 'motivation').label}`;
+        return `Topic · ${topicOption(draft.topic ?? 'motivation').label}`;
     }
   };
   const out: string[] = [];
   if (step === 'toneVoice' || step === 'schedule') out.push(basisLabel());
   if (step === 'schedule') {
-    out.push(`Ton · ${toneOption(draft.tone).label}`);
-    out.push(`Stimme · ${voiceOption(draft.voice).label}`);
+    out.push(`Tone · ${toneOption(draft.tone).label}`);
+    out.push(`Voice · ${voiceOption(draft.voice).label}`);
   }
   return out;
 }
 
-/** Kleiner Abschnittstitel. */
+/** Small section title. */
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.section}>
@@ -117,7 +117,7 @@ export default function AlarmEditorScreen() {
     void settingsRepo.getLinkConsent().then(setLinkConsent);
   }, []);
 
-  // Sprachausgabe beim Verlassen stoppen.
+  // Stop speech output when leaving.
   useEffect(() => {
     return () => {
       stopWake();
@@ -163,7 +163,7 @@ export default function AlarmEditorScreen() {
 
   const patch = (changes: Partial<Alarm>) => setDraft((d) => ({ ...d, ...changes }));
 
-  // --- Grundlage (KI-Eingabe) -------------------------------------------------
+  // --- Basis (AI input) --------------------------------------------------------
 
   const applyTextMode = (value: string, asVerbatim: boolean) => {
     if (asVerbatim) patch({ source: 'verbatim', text: value });
@@ -192,7 +192,7 @@ export default function AlarmEditorScreen() {
     selectBasisTab('topic');
   };
 
-  // --- Vorhören ---------------------------------------------------------------
+  // --- Preview ------------------------------------------------------------------
 
   const preview = async () => {
     setGenError(null);
@@ -202,18 +202,18 @@ export default function AlarmEditorScreen() {
       const content = await generateWakeContent(draft);
       if (draft.source === 'ai') patch({ text: content.text });
       if (!content.text.trim()) {
-        setGenError('Kein Text vorhanden.');
+        setGenError('No text available.');
         return;
       }
       await playWake(content);
     } catch (e) {
-      setGenError(e instanceof Error ? e.message : 'Konnte nicht generieren.');
+      setGenError(e instanceof Error ? e.message : 'Could not generate.');
     } finally {
       setGenerating(false);
     }
   };
 
-  // --- Navigation -------------------------------------------------------------
+  // --- Navigation ---------------------------------------------------------------
 
   const flow = mode === 'preset' ? PRESET_FLOW : KI_FLOW;
   const stepIndex = Math.max(0, flow.indexOf(step));
@@ -262,7 +262,7 @@ export default function AlarmEditorScreen() {
     animateClose();
   };
 
-  // Weiter erlaubt?
+  // Allowed to proceed?
   const canProceed =
     step !== 'basis' ||
     (basisTab === 'topic'
@@ -286,7 +286,7 @@ export default function AlarmEditorScreen() {
             </View>
           </GestureDetector>
 
-          {/* Kopf: Zurück + Fortschritt */}
+          {/* Header: back + progress */}
           <View style={styles.appbar}>
             <Pressable onPress={goBack} hitSlop={10} style={styles.back}>
               <Ionicons name="chevron-back" size={22} color={theme.text} />
@@ -323,18 +323,18 @@ export default function AlarmEditorScreen() {
             showsVerticalScrollIndicator={false}>
             {step === 'how' && (
               <>
-                <ThemedText style={styles.stepTitle}>Wie soll dein Weckton entstehen?</ThemedText>
+                <ThemedText style={styles.stepTitle}>How should your wake-up sound be created?</ThemedText>
                 <OptionCard
                   icon="albums-outline"
-                  title="Vorlage"
-                  desc="Fertigen Weckton auswählen — schnellster Weg."
+                  title="Preset"
+                  desc="Choose a ready-made wake-up sound — fastest way."
                   onPress={() => chooseMode('preset')}
                   theme={theme}
                 />
                 <OptionCard
                   icon="sparkles-outline"
-                  title="KI erstellt"
-                  desc="Aus Thema, eigenem Text oder einer Quelle."
+                  title="AI-generated"
+                  desc="From a topic, your own text, or a source."
                   onPress={() => chooseMode('ki')}
                   theme={theme}
                 />
@@ -343,7 +343,7 @@ export default function AlarmEditorScreen() {
 
             {step === 'preset' && (
               <>
-                <ThemedText style={styles.stepTitle}>Vorlage wählen</ThemedText>
+                <ThemedText style={styles.stepTitle}>Choose a Preset</ThemedText>
                 {PRESET_OPTIONS.map((p) => (
                   <Pressable
                     key={p.id}
@@ -364,13 +364,13 @@ export default function AlarmEditorScreen() {
 
             {step === 'basis' && (
               <>
-                <ThemedText style={styles.stepTitle}>Woraus soll die KI schöpfen?</ThemedText>
+                <ThemedText style={styles.stepTitle}>What should the AI draw from?</ThemedText>
                 <View style={styles.segmented}>
                   {(
                     [
-                      { id: 'topic', label: 'Thema' },
-                      { id: 'text', label: 'Eigener Text' },
-                      { id: 'source', label: 'Quelle' },
+                      { id: 'topic', label: 'Topic' },
+                      { id: 'text', label: 'Own Text' },
+                      { id: 'source', label: 'Source' },
                     ] as { id: AiBasis; label: string }[]
                   ).map((t) => {
                     const active = basisTab === t.id;
@@ -411,7 +411,7 @@ export default function AlarmEditorScreen() {
                         setTextValue(v);
                         applyTextMode(v, verbatim);
                       }}
-                      placeholder="Tippe oder diktiere deinen Text …"
+                      placeholder="Type or dictate your text …"
                       placeholderTextColor={theme.textSecondary}
                       multiline
                       style={[
@@ -422,7 +422,7 @@ export default function AlarmEditorScreen() {
                     />
                     <View style={styles.chipRow}>
                       <Chip
-                        label="Wörtlich vorlesen"
+                        label="Read verbatim"
                         selected={verbatim}
                         onPress={() => {
                           setVerbatim(true);
@@ -430,7 +430,7 @@ export default function AlarmEditorScreen() {
                         }}
                       />
                       <Chip
-                        label="Von KI aufbereiten"
+                        label="Refine with AI"
                         selected={!verbatim}
                         onPress={() => {
                           setVerbatim(false);
@@ -440,8 +440,8 @@ export default function AlarmEditorScreen() {
                     </View>
                     <ThemedText type="small" themeColor="textSecondary">
                       {verbatim
-                        ? 'Dein Text wird 1:1 vorgelesen.'
-                        : 'Die KI erfasst Emotion & Bedeutung und verstärkt sie leicht.'}
+                        ? 'Your text is read out 1:1.'
+                        : 'The AI picks up emotion & meaning and amplifies them slightly.'}
                     </ThemedText>
                   </View>
                 )}
@@ -454,7 +454,7 @@ export default function AlarmEditorScreen() {
                         setSourceValue(v);
                         patch({ sourceUrl: v });
                       }}
-                      placeholder="Link (https://…) oder Text einfügen"
+                      placeholder="Paste a link (https://…) or text"
                       placeholderTextColor={theme.textSecondary}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -466,7 +466,7 @@ export default function AlarmEditorScreen() {
                       ]}
                     />
                     <ThemedText type="small" themeColor="textSecondary">
-                      Du bist selbst dafür verantwortlich, ob du diese Quelle nutzen darfst — Verwendung auf eigenes Risiko.
+                      You are responsible for whether you&apos;re allowed to use this source — use at your own risk.
                     </ThemedText>
                   </View>
                 )}
@@ -475,8 +475,8 @@ export default function AlarmEditorScreen() {
 
             {step === 'toneVoice' && (
               <>
-                <ThemedText style={styles.stepTitle}>Ton & Stimme</ThemedText>
-                <Section title="Ton">
+                <ThemedText style={styles.stepTitle}>Tone & Voice</ThemedText>
+                <Section title="Tone">
                   <View style={styles.chipRow}>
                     {TONE_OPTIONS.map((t) => (
                       <Chip
@@ -488,7 +488,7 @@ export default function AlarmEditorScreen() {
                     ))}
                   </View>
                 </Section>
-                <Section title="Stimme">
+                <Section title="Voice">
                   <View style={styles.chipRow}>
                     {VOICE_OPTIONS.map((v) => (
                       <Chip
@@ -501,7 +501,7 @@ export default function AlarmEditorScreen() {
                   </View>
                 </Section>
                 <PrimaryButton
-                  title={generating ? 'Erstelle …' : 'Vorhören'}
+                  title={generating ? 'Generating …' : 'Preview'}
                   variant="ghost"
                   loading={generating}
                   onPress={() => void preview()}
@@ -521,7 +521,7 @@ export default function AlarmEditorScreen() {
 
             {step === 'schedule' && (
               <>
-                <ThemedText style={[styles.stepTitle, styles.stepTitleCentered]}>Weckzeit</ThemedText>
+                <ThemedText style={[styles.stepTitle, styles.stepTitleCentered]}>Alarm Time</ThemedText>
                 <View style={[styles.divider, { backgroundColor: theme.border }]} />
                 <View style={[styles.section, styles.timeRow]}>
                   {showPicker ? (
@@ -539,7 +539,7 @@ export default function AlarmEditorScreen() {
                     </Pressable>
                   )}
                 </View>
-                <Section title="Wochentage (•)">
+                <Section title="Weekdays (•)">
                   <WeekdayPicker
                     weekly={draft.weekdays}
                     once={draft.onceDays}
@@ -550,7 +550,7 @@ export default function AlarmEditorScreen() {
                   <TextInput
                     value={draft.label}
                     onChangeText={(label) => patch({ label })}
-                    placeholder="z.B. Arbeit"
+                    placeholder="e.g. Work"
                     placeholderTextColor={theme.textSecondary}
                     style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
                   />
@@ -559,31 +559,31 @@ export default function AlarmEditorScreen() {
             )}
           </ScrollView>
 
-          {/* Aktionsleiste */}
+          {/* Action bar */}
           <View style={[styles.actions, { paddingBottom: insets.bottom + Spacing.three + OVERSHOOT_PAD }]}>
             {step === 'schedule' ? (
               <View style={styles.actionRow}>
-                <PrimaryButton title="Abbrechen" variant="neutral" onPress={animateClose} style={styles.actionButton} />
-                <PrimaryButton title="Speichern" onPress={() => void handleSave()} style={styles.actionButton} />
+                <PrimaryButton title="Cancel" variant="neutral" onPress={animateClose} style={styles.actionButton} />
+                <PrimaryButton title="Save" onPress={() => void handleSave()} style={styles.actionButton} />
               </View>
             ) : step === 'basis' || step === 'toneVoice' ? (
-              <PrimaryButton title="Weiter" onPress={goNext} disabled={!canProceed} />
+              <PrimaryButton title="Next" onPress={goNext} disabled={!canProceed} />
             ) : null}
           </View>
 
-          {/* Consent-Modal (Erstnutzung externe Quelle) */}
+          {/* Consent modal (first use of an external source) */}
           {showConsent && (
             <View style={styles.consentOverlay}>
               <View style={[styles.consentCard, { backgroundColor: theme.background, borderColor: theme.border }]}>
-                <ThemedText type="smallBold">Externe Quelle nutzen</ThemedText>
+                <ThemedText type="smallBold">Use External Source</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Du kannst einen Text oder Link angeben, aus dem die KI einen Weckton erstellt. Bitte prüfe
-                  selbst, ob du den Inhalt für diesen Zweck verwenden darfst. Die Nutzung erfolgt auf eigenes
-                  Risiko.
+                  You can provide a text or link for the AI to build a wake-up sound from. Please check
+                  yourself whether you&apos;re allowed to use this content for this purpose. Use is at your own
+                  risk.
                 </ThemedText>
                 <View style={styles.consentActions}>
-                  <PrimaryButton title="Abbrechen" variant="ghost" onPress={declineConsent} />
-                  <PrimaryButton title="Verstanden" onPress={acceptConsent} />
+                  <PrimaryButton title="Cancel" variant="ghost" onPress={declineConsent} />
+                  <PrimaryButton title="Understood" onPress={acceptConsent} />
                 </View>
               </View>
             </View>
@@ -633,8 +633,8 @@ const styles = StyleSheet.create({
   back: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   progress: { flexDirection: 'row', gap: 5, flex: 1 },
   progressSeg: { height: 4, flex: 1, borderRadius: 2 },
-  // Entscheidungs-Zusammenfassung unter den Statusbalken; paddingBottom schafft
-  // bewusst Abstand zur Kategorieüberschrift.
+  // Decision summary below the progress bar; paddingBottom deliberately
+  // creates spacing from the section heading.
   crumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, paddingHorizontal: Spacing.four, paddingTop: Spacing.one, paddingBottom: Spacing.three },
   crumb: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   scroll: { flex: 1 },

@@ -1,11 +1,11 @@
 /**
- * Dev-Gallery: rendert die realen UI-Komponenten isoliert, interaktiv und in
- * Hell/Dunkel — damit sich das Aussehen präzise iterieren lässt, ohne durch die
- * echte App zu navigieren. Route: `/gallery`.
+ * Dev gallery: renders the real UI components in isolation, interactively and
+ * in light/dark — so the look can be iterated on precisely without navigating
+ * through the real app. Route: `/gallery`.
  *
- * Nur im Dev-Build erreichbar (`__DEV__`-Guard); im Release-Build leitet sie um.
- * Auf breiten Viewports (Web/Tablet) stehen Hell & Dunkel nebeneinander, sonst
- * schaltet ein Auto/Hell/Dunkel-Umschalter das ganze Blatt.
+ * Only reachable in dev builds (`__DEV__` guard); redirects in release builds.
+ * On wide viewports (web/tablet), light & dark sit side by side; otherwise an
+ * auto/light/dark toggle switches the whole sheet.
  */
 
 import { Redirect } from 'expo-router';
@@ -34,13 +34,13 @@ function Gallery() {
   const { width } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>('system');
 
-  // Breit genug (Web/Tablet) → Hell & Dunkel direkt nebeneinander vergleichen.
+  // Wide enough (web/tablet) → compare light & dark directly side by side.
   if (width >= 720) {
     return (
       <View style={styles.split}>
-        <ThemeColumn scheme="light" label="Hell" />
+        <ThemeColumn scheme="light" label="Light" />
         <View style={styles.divider} />
-        <ThemeColumn scheme="dark" label="Dunkel" />
+        <ThemeColumn scheme="dark" label="Dark" />
       </View>
     );
   }
@@ -69,7 +69,7 @@ function GalleryFrame({ toolbar }: { toolbar?: ReactNode }) {
         <View style={styles.headerRow}>
           <View style={styles.flex}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.eyebrow}>
-              DEV · KOMPONENTEN
+              DEV · COMPONENTS
             </ThemedText>
             <ThemedText type="subtitle">Gallery</ThemedText>
           </View>
@@ -89,10 +89,10 @@ function GalleryFrame({ toolbar }: { toolbar?: ReactNode }) {
           <Story name="WeekdayPicker">
             <WeekdayDemo />
           </Story>
-          <Story name="Töne">
+          <Story name="Tones">
             <ToneDemo />
           </Story>
-          <Story name="Themen">
+          <Story name="Topics">
             <TopicDemo />
           </Story>
         </View>
@@ -101,7 +101,7 @@ function GalleryFrame({ toolbar }: { toolbar?: ReactNode }) {
   );
 }
 
-/* ---------- Rahmen-Bausteine ---------- */
+/* ---------- Frame building blocks ---------- */
 
 function Story({ name, children }: { name: string; children: ReactNode }) {
   const theme = useTheme();
@@ -122,8 +122,8 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => voi
   const theme = useTheme();
   const items: { id: Mode; label: string }[] = [
     { id: 'system', label: 'Auto' },
-    { id: 'light', label: 'Hell' },
-    { id: 'dark', label: 'Dunkel' },
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
   ];
   return (
     <View style={[styles.toggle, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
@@ -155,19 +155,19 @@ function Pill({ label }: { label: string }) {
   );
 }
 
-/* ---------- Komponenten-Stories ---------- */
+/* ---------- Component stories ---------- */
 
 function TextSpecimens() {
   return (
     <View style={styles.stack}>
       <ThemedText type="subtitle">Subtitle</ThemedText>
-      <ThemedText type="default">Default — der normale Fließtext der App.</ThemedText>
+      <ThemedText type="default">Default — the app&apos;s normal body text.</ThemedText>
       <ThemedText type="smallBold">Small Bold</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Small · sekundär
+        Small · secondary
       </ThemedText>
       <ThemedText type="link">Link</ThemedText>
-      <ThemedText type="code">const wecker = 6;</ThemedText>
+      <ThemedText type="code">const alarm = 6;</ThemedText>
     </View>
   );
 }
@@ -176,9 +176,9 @@ function ChipDemo() {
   const [on, setOn] = useState(true);
   return (
     <View style={styles.row}>
-      <Chip label="Toggle mich" selected={on} onPress={() => setOn((v) => !v)} />
-      <Chip label="Ausgewählt" selected onPress={() => {}} />
-      <Chip label="Inaktiv" selected={false} onPress={() => {}} />
+      <Chip label="Toggle me" selected={on} onPress={() => setOn((v) => !v)} />
+      <Chip label="Selected" selected onPress={() => {}} />
+      <Chip label="Inactive" selected={false} onPress={() => {}} />
     </View>
   );
 }
@@ -211,7 +211,7 @@ function WeekdayDemo() {
 }
 
 function ToneDemo() {
-  const [id, setId] = useState<ToneId>('motivierend');
+  const [id, setId] = useState<ToneId>('motivating');
   return (
     <View style={styles.row}>
       {TONE_OPTIONS.map((t) => (

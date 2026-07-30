@@ -1,13 +1,13 @@
 /**
- * Text-Provider: Anthropic Claude.
+ * Text provider: Anthropic Claude.
  *
- * Bewusst per `fetch` (statt @anthropic-ai/sdk): Das offizielle SDK zieht
- * Node-orientierte Abhängigkeiten mit, die im React-Native/Hermes-Bundle
- * (Metro) unzuverlässig sind. Ein einzelner nicht-streamender Messages-Aufruf
- * ist per fetch robust und bündelt sauber. Die Provider-Grenze macht einen
- * späteren Wechsel auf das SDK oder einen Backend-Proxy trivial.
+ * Deliberately via `fetch` (instead of @anthropic-ai/sdk): the official SDK
+ * pulls in Node-oriented dependencies that are unreliable in the
+ * React Native/Hermes bundle (Metro). A single non-streaming Messages call
+ * is robust via fetch and bundles cleanly. The provider boundary makes a
+ * later switch to the SDK or a backend proxy trivial.
  *
- * API-Referenz: POST /v1/messages, Modell "claude-opus-4-8".
+ * API reference: POST /v1/messages, model "claude-opus-4-8".
  */
 
 import { aiConfig } from '@/lib/ai/config';
@@ -50,7 +50,7 @@ export const claudeTextProvider: TextProvider = {
       .trim();
 
     if (!text) {
-      throw new Error('Anthropic-Antwort ohne Text.');
+      throw new Error('Anthropic response contained no text.');
     }
     return text;
   },

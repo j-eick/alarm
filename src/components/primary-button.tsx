@@ -15,7 +15,7 @@ interface PrimaryButtonProps {
   style?: ViewStyle;
 }
 
-/** Einheitlicher Button in drei Varianten. Rein präsentational. */
+/** Unified button in three variants. Purely presentational. */
 export function PrimaryButton({
   title,
   onPress,

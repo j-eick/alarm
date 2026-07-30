@@ -1,9 +1,9 @@
 /**
- * Kachel-Design „v1-gradient-glow" (erste Iteration).
+ * Tile design "v1-gradient-glow" (first iteration).
  *
- * Dezenter diagonaler Farbverlauf + weiche Kreis-Artefakte, Vektor-Icon,
- * Kicker/Titel/Beschreibung. Minimalistisch-modern, theme-sicher.
- * Aktivierbar über constants/design.ts → TILE_VARIANT.
+ * Subtle diagonal gradient + soft blob artifacts, vector icon,
+ * kicker/title/description. Minimalist-modern, theme-safe.
+ * Activated via constants/design.ts → TILE_VARIANT.
  */
 
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -27,18 +27,18 @@ export function GradientGlowTile({ example, onPress }: ExampleTileProps) {
         { backgroundColor: theme.backgroundElement, borderColor: theme.border },
         pressed && styles.pressed,
       ]}>
-      {/* Dezenter diagonaler Farbverlauf in der Akzentfarbe */}
+      {/* Subtle diagonal gradient in the accent color */}
       <LinearGradient
         colors={[`${color}26`, `${color}05`]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Weiche Kreis-Artefakte für etwas Tiefe */}
+      {/* Soft blob artifacts for a bit of depth */}
       <View style={[styles.blob, styles.blobTop, { backgroundColor: `${color}14` }]} />
       <View style={[styles.blob, styles.blobBottom, { backgroundColor: `${color}0F` }]} />
 
-      {/* Inhalt */}
+      {/* Content */}
       <View style={styles.row}>
         <View style={[styles.iconBox, { backgroundColor: color }]}>
           <Ionicons name={example.icon} size={22} color="#ffffff" />
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   kicker: { fontSize: 11, letterSpacing: 1.2 },
   title: { fontSize: 16 },
   chevron: { opacity: 0.6 },
-  // Dekorative, weich wirkende Kreise (durch overflow:hidden beschnitten)
+  // Decorative, soft-looking circles (clipped by overflow:hidden)
   blob: { position: 'absolute', borderRadius: 999 },
   blobTop: { width: 120, height: 120, top: -46, right: -34 },
   blobBottom: { width: 84, height: 84, bottom: -34, left: 48 },

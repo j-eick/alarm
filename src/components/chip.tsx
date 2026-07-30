@@ -10,7 +10,7 @@ interface ChipProps {
   onPress: () => void;
 }
 
-/** Auswählbarer Chip (für Wochentage, Stimmung, Inhaltstyp). Präsentational. */
+/** Selectable chip (for weekdays, mood, content type). Presentational. */
 export function Chip({ label, selected, onPress }: ChipProps) {
   const theme = useTheme();
   return (

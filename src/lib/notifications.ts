@@ -1,6 +1,6 @@
 /**
- * Notification-Grundkonfiguration: Anzeigeverhalten, Android-Channel, Rechte.
- * Wird einmal beim App-Start aufgerufen (siehe app/_layout.tsx).
+ * Base notification configuration: display behavior, Android channel, permissions.
+ * Called once on app start (see app/_layout.tsx).
  */
 
 import * as Notifications from 'expo-notifications';
@@ -8,7 +8,7 @@ import { Platform } from 'react-native';
 
 export const ALARM_CHANNEL_ID = 'alarms';
 
-/** Legt fest, wie eine Notification im Vordergrund angezeigt wird (SDK 57 API). */
+/** Defines how a notification is displayed in the foreground (SDK 57 API). */
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldPlaySound: true,
@@ -18,18 +18,18 @@ Notifications.setNotificationHandler({
   }),
 });
 
-/** Erstellt den Android-Alarm-Channel (No-op auf iOS). Idempotent. */
+/** Creates the Android alarm channel (no-op on iOS). Idempotent. */
 export async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(ALARM_CHANNEL_ID, {
-    name: 'Wecker',
+    name: 'Alarms',
     importance: Notifications.AndroidImportance.HIGH,
     sound: 'default',
     vibrationPattern: [0, 250, 250, 250],
   });
 }
 
-/** Fragt Benachrichtigungsrechte an und meldet, ob sie erteilt sind. */
+/** Requests notification permissions and reports whether they were granted. */
 export async function ensurePermissions(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) return true;
@@ -40,7 +40,7 @@ export async function ensurePermissions(): Promise<boolean> {
   return requested.granted;
 }
 
-/** Einmalige Initialisierung (Channel + Rechte). */
+/** One-time initialization (channel + permissions). */
 export async function initNotifications(): Promise<boolean> {
   await ensureAndroidChannel();
   return ensurePermissions();

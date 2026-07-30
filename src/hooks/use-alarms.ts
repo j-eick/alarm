@@ -1,11 +1,11 @@
 /**
- * Domänen-Store + Hook: einzige Schnittstelle der UI zu Alarmen.
+ * Domain store + hook: the UI's single interface to alarms.
  *
- * Ein modulweiter Store (via useSyncExternalStore) hält den Alarmzustand, damit
- * alle Screens synchron bleiben (z.B. Liste aktualisiert sich nach dem Speichern
- * im Editor). Bündelt Persistenz (storage), Scheduling (scheduler) und
- * KI-Vorabgenerierung (ai) zu wenigen, klar benannten Aktionen. Screens
- * enthalten dadurch keine Storage-/Notification-/API-Details.
+ * A module-wide store (via useSyncExternalStore) holds the alarm state so
+ * all screens stay in sync (e.g. the list updates after saving in the
+ * editor). Bundles persistence (storage), scheduling (scheduler) and
+ * AI pre-generation (ai) into a few clearly named actions. This keeps
+ * screens free of storage/notification/API details.
  */
 
 import { useEffect, useSyncExternalStore } from 'react';
@@ -20,7 +20,7 @@ interface AlarmState {
   loading: boolean;
 }
 
-// --- Store-Interna ----------------------------------------------------------
+// --- Store internals ----------------------------------------------------------
 
 let state: AlarmState = { alarms: [], loading: true };
 const listeners = new Set<() => void>();
@@ -43,25 +43,24 @@ async function init(): Promise<void> {
   setState({ alarms, loading: false });
 }
 
-/** Persistiert die Liste (sortiert) und aktualisiert den Store. */
+/** Persists the list (sorted) and updates the store. */
 async function persist(alarms: Alarm[]): Promise<void> {
   const sorted = [...alarms].sort(byTime);
   setState({ alarms: sorted, loading: false });
   await alarmsRepo.saveAll(sorted);
 }
 
-/** Wendet den gewünschten Zustand eines Alarms auf die Notifications an. */
+/** Applies the desired state of an alarm to the notifications. */
 async function reconcileSchedule(alarm: Alarm): Promise<string[]> {
   await cancelAlarm(alarm.scheduledIds);
   return alarm.enabled ? scheduleAlarm(alarm) : [];
 }
 
-// --- Aktionen (modulweit stabil) -------------------------------------------
+// --- Actions (module-wide stable) --------------------------------------------
 
 /**
- * Legt einen Alarm an oder aktualisiert ihn. Reconcilet Notifications und
- * stößt die KI-Vorabgenerierung an (nicht-blockierend), damit der Weck-Screen
- * sofort Inhalt hat.
+ * Creates or updates an alarm. Reconciles notifications and kicks off
+ * AI pre-generation (non-blocking) so the ring screen has content right away.
  */
 async function saveAlarm(alarm: Alarm): Promise<void> {
   const scheduledIds = await reconcileSchedule(alarm);
@@ -75,7 +74,7 @@ async function saveAlarm(alarm: Alarm): Promise<void> {
     .catch(() => undefined);
 }
 
-/** Aktiviert/deaktiviert einen Alarm (nur Reschedule, keine Neugenerierung). */
+/** Enables/disables an alarm (reschedule only, no regeneration). */
 async function toggleAlarm(id: string, enabled: boolean): Promise<void> {
   const target = state.alarms.find((a) => a.id === id);
   if (!target) return;
@@ -83,7 +82,7 @@ async function toggleAlarm(id: string, enabled: boolean): Promise<void> {
   await persist(state.alarms.map((a) => (a.id === id ? { ...a, enabled, scheduledIds } : a)));
 }
 
-/** Löscht einen Alarm samt Notifications und zwischengespeichertem Inhalt. */
+/** Deletes an alarm along with its notifications and cached content. */
 async function deleteAlarm(id: string): Promise<void> {
   const target = state.alarms.find((a) => a.id === id);
   if (target) await cancelAlarm(target.scheduledIds);
@@ -95,7 +94,7 @@ function getById(id: string): Alarm | undefined {
   return state.alarms.find((a) => a.id === id);
 }
 
-// --- Hook -------------------------------------------------------------------
+// --- Hook -----------------------------------------------------------------
 
 export function useAlarms() {
   const snapshot = useSyncExternalStore(subscribe, () => state);
@@ -114,7 +113,7 @@ export function useAlarms() {
   };
 }
 
-/** Sortiert Alarme nach Uhrzeit (aufsteigend). */
+/** Sorts alarms by time (ascending). */
 function byTime(a: Alarm, b: Alarm): number {
   return a.hour * 60 + a.minute - (b.hour * 60 + b.minute);
 }

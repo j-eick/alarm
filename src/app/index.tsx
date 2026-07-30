@@ -44,7 +44,7 @@ export default function AlarmListScreen() {
               {hasAlarms && (
                 <>
                   <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionLabel}>
-                    VORSCHLÄGE
+                    SUGGESTIONS
                   </ThemedText>
                   <View style={styles.compactRow}>
                     {WAKE_EXAMPLES.map((ex) => (
@@ -55,7 +55,7 @@ export default function AlarmListScreen() {
                     type="smallBold"
                     themeColor="textSecondary"
                     style={[styles.sectionLabel, styles.sectionLabelTop]}>
-                    DEINE WECKER
+                    YOUR ALARMS
                   </ThemedText>
                 </>
               )}
@@ -85,9 +85,9 @@ export default function AlarmListScreen() {
           ListEmptyComponent={
             loading ? null : (
               <View style={styles.empty}>
-                <ThemedText style={styles.emptyTitle}>Dein erster Weckton</ThemedText>
+                <ThemedText style={styles.emptyTitle}>Your First Wake-Up Sound</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary" style={styles.emptyIntro}>
-                  Nicht nur laut — ein kompletter Weckton, zugeschnitten auf dich. Zum Beispiel:
+                  Not just loud — a complete wake-up sound, tailored to you. For example:
                 </ThemedText>
                 <View style={styles.tiles}>
                   {WAKE_EXAMPLES.map((ex) => (
@@ -98,7 +98,7 @@ export default function AlarmListScreen() {
             )
           }
         />
-        <PrimaryButton title="Weckton erstellen" onPress={goCreate} style={styles.addButton} />
+        <PrimaryButton title="Create Wake-Up Sound" onPress={goCreate} style={styles.addButton} />
       </SafeAreaView>
     </ThemedView>
   );

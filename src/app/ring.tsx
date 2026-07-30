@@ -25,7 +25,7 @@ export default function RingScreen() {
 
   const alarm = alarmId ? getById(alarmId) : undefined;
 
-  // Inhalt laden (zwischengespeichert) oder bei Bedarf frisch generieren, dann abspielen.
+  // Load cached content, or generate fresh if needed, then play it.
   useEffect(() => {
     if (loading || !alarmId || startedRef.current) return;
     startedRef.current = true;
@@ -67,7 +67,7 @@ export default function RingScreen() {
             {alarm ? formatTime(alarm.hour, alarm.minute) : '⏰'}
           </ThemedText>
           <ThemedText type="subtitle" style={styles.label}>
-            {alarm?.label ?? 'Wecker'}
+            {alarm?.label ?? 'Alarm'}
           </ThemedText>
         </View>
 
@@ -82,8 +82,8 @@ export default function RingScreen() {
         </View>
 
         <View style={styles.actions}>
-          <PrimaryButton title={`Schlummern (${SNOOZE_MINUTES} Min)`} variant="ghost" onPress={handleSnooze} />
-          <PrimaryButton title="Stopp" onPress={handleStop} />
+          <PrimaryButton title={`Snooze (${SNOOZE_MINUTES} min)`} variant="ghost" onPress={handleSnooze} />
+          <PrimaryButton title="Stop" onPress={handleStop} />
         </View>
       </SafeAreaView>
     </ThemedView>

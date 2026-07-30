@@ -1,9 +1,9 @@
 /**
- * Beispiel-Wecktöne für den Leerzustand — zeigen die Bandbreite, die Attune
- * generieren kann (Star-Stimme, Gesang, kontextbasiert …).
+ * Example wake-up sounds for the empty state — showing the range Attune
+ * can generate (celebrity voice, singing, context-based …).
  *
- * Rein illustrativ/erweiterbar: neue Kachel = neuer Eintrag hier. `color` gibt
- * der Kachel ihre Identität (Icon + Farbverlauf); `icon` ist ein Ionicons-Name.
+ * Purely illustrative/extensible: new tile = new entry here. `color` gives
+ * the tile its identity (icon + gradient); `icon` is an Ionicons name.
  */
 
 import type Ionicons from '@expo/vector-icons/Ionicons';
@@ -12,42 +12,42 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export interface WakeExample {
   id: string;
-  /** Kleine Kategorie-Überschrift (Caps). */
+  /** Small category heading (caps). */
   kicker: string;
   title: string;
-  /** Sehr kurzer Titel für die kompakten Kacheln (nebeneinander). */
+  /** Very short title for the compact tiles (side by side). */
   shortTitle: string;
   description: string;
   icon: IoniconName;
-  /** Akzentfarbe der Kachel (funktioniert in Light & Dark). */
+  /** Accent color of the tile (works in light & dark). */
   color: string;
 }
 
 export const WAKE_EXAMPLES: WakeExample[] = [
   {
     id: 'celebrity-voice',
-    kicker: 'Star-Stimme',
-    title: 'Wachgerüttelt von The Rock',
+    kicker: 'Celebrity Voice',
+    title: 'Shaken Awake by The Rock',
     shortTitle: 'The Rock',
-    description: 'Kraftvoll und direkt — ein Motivationsschub, der keine Ausreden gelten lässt.',
+    description: 'Powerful and direct — a motivational push that accepts no excuses.',
     icon: 'flame-outline',
     color: '#F76B15',
   },
   {
     id: 'singing-voice',
-    kicker: 'Gesangsstimme',
-    title: 'Elsa singt dich wach',
+    kicker: 'Singing Voice',
+    title: 'Elsa Sings You Awake',
     shortTitle: 'Elsa',
-    description: 'Sanft und melodisch — ein Weckruf, der dich behutsam aus dem Schlaf holt.',
+    description: 'Gentle and melodic — a wake-up call that eases you out of sleep.',
     icon: 'musical-notes-outline',
     color: '#3C9EFF',
   },
   {
     id: 'context-todos',
-    kicker: 'Aus deinem Kontext',
-    title: 'Dein Tag von gestern',
-    shortTitle: 'To-Do-Liste',
-    description: 'Greift deine priorisierten Aufgaben auf und bringt dich fokussiert in den Tag.',
+    kicker: 'From Your Context',
+    title: 'Your Day From Yesterday',
+    shortTitle: 'To-Do List',
+    description: 'Picks up your prioritized tasks and brings you focused into the day.',
     icon: 'checkmark-done-outline',
     color: '#30A46C',
   },

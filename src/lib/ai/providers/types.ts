@@ -1,9 +1,9 @@
 /**
- * Provider-Abstraktionen der KI-Schicht.
+ * Provider abstractions of the AI layer.
  *
- * UI/Orchestrator kennen nur diese Interfaces — konkrete Anbieter (Claude,
- * Mock, Fish Audio …) sind austauschbar. Neuer Anbieter = neue Datei, die das
- * Interface implementiert; kein aufrufender Code ändert sich.
+ * UI/orchestrator only know these interfaces — concrete providers (Claude,
+ * mock, Fish Audio …) are swappable. New provider = new file implementing
+ * the interface; no calling code changes.
  */
 
 import type { VoiceId } from '@/types';
@@ -12,11 +12,11 @@ export interface TextRequest {
   systemPrompt: string;
   userPrompt: string;
   maxTokens: number;
-  /** Deterministischer Fallback, den Mock-/Fehlerpfade zurückgeben. */
+  /** Deterministic fallback that mock/error paths return. */
   fallbackText: string;
 }
 
-/** Erzeugt den Weck-Text. */
+/** Generates the wake-up text. */
 export interface TextProvider {
   readonly id: 'claude' | 'mock';
   generate(req: TextRequest): Promise<string>;
@@ -24,13 +24,13 @@ export interface TextProvider {
 
 export interface TtsSynthesizeOptions {
   voice: VoiceId;
-  /** Sprechtempo, siehe `ToneOption.ttsSpeed`. */
+  /** Speaking rate, see `ToneOption.ttsSpeed`. */
   speed?: number;
 }
 
-/** Wandelt Text in eine abspielbare Audiodatei um (oder null → Geräte-TTS). */
+/** Turns text into a playable audio file (or null → device TTS). */
 export interface TtsProvider {
   readonly id: string;
-  /** Gibt einen lokalen Datei-URI zurück, oder null wenn kein Audio erzeugt wurde. */
+  /** Returns a local file URI, or null if no audio was generated. */
   synthesize(text: string, options: TtsSynthesizeOptions): Promise<string | null>;
 }

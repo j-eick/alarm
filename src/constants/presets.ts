@@ -1,22 +1,22 @@
 import type { AiBasis, AlarmSource, ToneId, TopicId, VoiceId } from '@/types';
 
 /**
- * Fertige Weckton-Vorlagen. Eine Vorlage befüllt den Entwurf vor (Quelle +
- * Ton + Stimme, ggf. Thema) und springt direkt zum Zeitplan.
+ * Ready-made wake-up-sound presets. A preset pre-fills the draft (source +
+ * tone + voice, optionally topic) and jumps straight to the schedule step.
  *
- * Erweiterbar per Registry-Muster: neue Vorlage = Eintrag hier.
+ * Extensible via registry pattern: new preset = entry here.
  */
 export interface PresetOption {
   id: string;
   label: string;
   description: string;
-  /** Akzentfarbe der Kachel (funktioniert in Light & Dark). */
+  /** Accent color of the tile (works in light & dark). */
   color: string;
   source: AlarmSource;
-  /** Bei `source: 'ai'`. */
+  /** When `source: 'ai'`. */
   aiBasis?: AiBasis;
   topic?: TopicId;
-  /** Bei `source: 'verbatim'` der vorzulesende Text. */
+  /** When `source: 'verbatim'`, the text to read out. */
   text?: string;
   tone: ToneId;
   voice: VoiceId;
@@ -24,47 +24,47 @@ export interface PresetOption {
 
 export const PRESET_OPTIONS: PresetOption[] = [
   {
-    id: 'sanfter-start',
-    label: 'Sanfter Start',
-    description: 'Ruhig und achtsam aus dem Schlaf.',
+    id: 'gentle-start',
+    label: 'Gentle Start',
+    description: 'Calm and mindful out of sleep.',
     color: '#3C9EFF',
     source: 'ai',
     aiBasis: 'topic',
-    topic: 'achtsamkeit',
-    tone: 'sanft',
+    topic: 'mindfulness',
+    tone: 'gentle',
     voice: 'warm',
   },
   {
     id: 'power-motivation',
-    label: 'Power-Motivation',
-    description: 'Direkter Schub, der keine Ausreden gelten lässt.',
+    label: 'Power Motivation',
+    description: 'A direct push that accepts no excuses.',
     color: '#F76B15',
     source: 'ai',
     aiBasis: 'topic',
     topic: 'motivation',
-    tone: 'energetisch',
-    voice: 'klar',
+    tone: 'energetic',
+    voice: 'clear',
   },
   {
-    id: 'tagesfokus',
-    label: 'Tagesfokus',
-    description: 'Das Wichtigste zuerst — klar sortiert in den Tag.',
+    id: 'daily-focus',
+    label: 'Daily Focus',
+    description: 'The most important thing first — a clear start to the day.',
     color: '#30A46C',
     source: 'ai',
     aiBasis: 'topic',
-    topic: 'tagesfokus',
-    tone: 'motivierend',
+    topic: 'focus',
+    tone: 'motivating',
     voice: 'warm',
   },
   {
-    id: 'gute-laune',
-    label: 'Gute Laune',
-    description: 'Dankbar und fröhlich den Tag begrüßen.',
+    id: 'good-mood',
+    label: 'Good Mood',
+    description: 'Greet the day with gratitude and cheer.',
     color: '#E5484D',
     source: 'ai',
     aiBasis: 'topic',
-    topic: 'dankbarkeit',
-    tone: 'froehlich',
+    topic: 'gratitude',
+    tone: 'cheerful',
     voice: 'warm',
   },
 ];

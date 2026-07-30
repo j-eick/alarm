@@ -1,9 +1,9 @@
 /**
- * Alarm-Scheduling über expo-notifications.
+ * Alarm scheduling via expo-notifications.
  *
- * Plant pro aktivem Wochentag eine wiederkehrende WEEKLY-Notification; ohne
- * Wochentage eine einmalige DATE-Notification zum nächsten Auftreten. Jede
- * Notification trägt `data.alarmId`, damit der Tap-Handler den Weck-Screen öffnet.
+ * Schedules one recurring WEEKLY notification per active weekday; without
+ * weekdays, a single one-off DATE notification for the next occurrence. Every
+ * notification carries `data.alarmId` so the tap handler opens the ring screen.
  */
 
 import * as Notifications from 'expo-notifications';
@@ -12,13 +12,13 @@ import type { Alarm, Weekday } from '@/types';
 import { ALARM_CHANNEL_ID } from './notifications';
 import { nextOccurrence, nextOccurrenceOnWeekday } from './time';
 
-/** Nutzlast, die jede Alarm-Notification mitführt. */
+/** Payload carried by every alarm notification. */
 export interface AlarmNotificationData {
   alarmId: string;
 }
 
 /**
- * Konvertiert ISO-Wochentag (1=Mo … 7=So) in Expos Schema (1=So … 7=Sa).
+ * Converts ISO weekday (1=Mon … 7=Sun) to Expo's scheme (1=Sun … 7=Sat).
  */
 function toExpoWeekday(isoWeekday: Weekday): number {
   return (isoWeekday % 7) + 1;
@@ -26,16 +26,16 @@ function toExpoWeekday(isoWeekday: Weekday): number {
 
 function buildContent(alarm: Alarm): Notifications.NotificationContentInput {
   return {
-    title: alarm.label || 'Wecker',
-    body: 'Tippe, um deinen persönlichen Weck-Talk zu starten.',
+    title: alarm.label || 'Alarm',
+    body: 'Tap to start your personal wake-up talk.',
     sound: 'default',
     data: { alarmId: alarm.id } satisfies AlarmNotificationData,
   };
 }
 
 /**
- * Plant alle Notifications für einen Alarm und gibt deren IDs zurück.
- * Voraussetzung: `alarm.enabled === true` (Aufrufer prüft das).
+ * Schedules all notifications for an alarm and returns their IDs.
+ * Precondition: `alarm.enabled === true` (checked by the caller).
  */
 export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
   const content = buildContent(alarm);
@@ -43,7 +43,7 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
 
   const onceDays = alarm.onceDays ?? [];
 
-  // Ohne jeden markierten Tag: einmaliger Alarm zum nächsten Auftreten.
+  // No day marked at all: one-off alarm for the next occurrence.
   if (alarm.weekdays.length === 0 && onceDays.length === 0) {
     const date = nextOccurrence(alarm.hour, alarm.minute);
     const id = await Notifications.scheduleNotificationAsync({
@@ -58,7 +58,7 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
     return ids;
   }
 
-  // `weekly`: eine wiederkehrende WEEKLY-Notification pro dauerhaftem Wochentag.
+  // `weekly`: one recurring WEEKLY notification per permanent weekday.
   for (const weekday of alarm.weekdays) {
     const id = await Notifications.scheduleNotificationAsync({
       content,
@@ -73,7 +73,7 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
     ids.push(id);
   }
 
-  // `once`: je eine einmalige DATE-Notification zum nächsten Auftreten des Tags.
+  // `once`: one one-off DATE notification each, for the next occurrence of the day.
   for (const weekday of onceDays) {
     const date = nextOccurrenceOnWeekday(weekday, alarm.hour, alarm.minute);
     const id = await Notifications.scheduleNotificationAsync({
@@ -89,7 +89,7 @@ export async function scheduleAlarm(alarm: Alarm): Promise<string[]> {
   return ids;
 }
 
-/** Bricht alle geplanten Notifications eines Alarms ab. */
+/** Cancels all scheduled notifications for an alarm. */
 export async function cancelAlarm(scheduledIds: string[]): Promise<void> {
   await Promise.all(
     scheduledIds.map((id) => Notifications.cancelScheduledNotificationAsync(id)),
@@ -97,8 +97,8 @@ export async function cancelAlarm(scheduledIds: string[]): Promise<void> {
 }
 
 /**
- * Plant eine einmalige Schlummer-Notification `minutes` in der Zukunft, die
- * denselben Alarm (und damit denselben Weck-Inhalt) erneut auslöst.
+ * Schedules a one-off snooze notification `minutes` in the future, which
+ * triggers the same alarm (and thus the same wake-up content) again.
  */
 export async function scheduleSnooze(
   alarm: Alarm,

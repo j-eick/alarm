@@ -1,19 +1,19 @@
 /**
- * Zentrale Design-Schalter (Nomenklatur).
+ * Central design switches (nomenclature).
  *
- * Hier legst du fest, welche Design-Variante aktiv ist. So kannst du im Zuruf
- * sagen, wohin „zurückgerudert" werden soll (z.B. „tile/v1" oder „sheet/solid").
- * Siehe README → „Design-Varianten".
+ * This is where you set which design variant is active. That way you can
+ * say in passing where to "roll back" to (e.g. "tile/v1" or "sheet/solid").
+ * See README → "Design Variants".
  */
 
-/** Kachel-Design im Leerzustand. Varianten liegen in components/example-tile/variants/. */
+/** Tile design in the empty state. Variants live in components/example-tile/variants/. */
 export type TileVariant = 'v1-gradient-glow';
 export const TILE_VARIANT: TileVariant = 'v1-gradient-glow';
 
 /**
- * Stil des hochschiebenden Einstellungs-Screens (Alarm-Editor):
- *  - 'glass' → halbtransparent + Blur, Hintergrund scheint durch
- *  - 'solid' → deckende Fläche (Effekt aus)
+ * Style of the sliding-up settings screen (alarm editor):
+ *  - 'glass' → semi-transparent + blur, background shows through
+ *  - 'solid' → opaque surface (effect off)
  */
 export type SheetStyle = 'glass' | 'solid';
 export const SHEET_STYLE: SheetStyle = 'glass';

@@ -1,10 +1,10 @@
 /**
- * KI-Orchestrator: erzeugt aus einem Alarm den Weck-Inhalt (Text + optional Audio).
+ * AI orchestrator: creates the wake-up content (text + optional audio) from an alarm.
  *
- * `generateWakeText` liefert nur den Text (für „Vorhören"/„Neu würfeln"),
- * `generateWakeContent` zusätzlich optionales Cloud-TTS-Audio. Bei
- * `source: 'verbatim'` wird der Text des Nutzers direkt genutzt; bei `'ai'`
- * schreibt Claude (bzw. der Mock) aus der jeweiligen `aiBasis`.
+ * `generateWakeText` returns only the text (for "Preview"/"Re-roll"),
+ * `generateWakeContent` additionally returns optional cloud TTS audio. For
+ * `source: 'verbatim'`, the user's text is used directly; for `'ai'`,
+ * Claude (or the mock) writes it based on the respective `aiBasis`.
  */
 
 import type { Alarm, GeneratedContent } from '@/types';
@@ -25,15 +25,15 @@ export interface WakeText {
 }
 
 /**
- * Nur der Text. Kann werfen, wenn eine externe Quelle (`aiBasis: 'source'`)
- * nicht eingelesen werden kann — Aufrufer sollten das dem Nutzer zeigen.
+ * Just the text. Can throw if an external source (`aiBasis: 'source'`)
+ * can't be read — callers should show this to the user.
  */
 export async function generateWakeText(alarm: Alarm): Promise<WakeText> {
   if (alarm.source === 'verbatim') {
     return { text: alarm.text.trim(), source: 'user' };
   }
 
-  // Externe Quelle ggf. zuerst einlesen (wirft bei Fehler).
+  // Read the external source first if needed (throws on failure).
   let sourceContent: string | undefined;
   if (alarm.aiBasis === 'source') {
     sourceContent = await ingestSource(alarm.sourceUrl ?? '');
@@ -57,7 +57,7 @@ export async function generateWakeText(alarm: Alarm): Promise<WakeText> {
 export async function generateWakeContent(alarm: Alarm): Promise<GeneratedContent> {
   const { text, source } = await generateWakeText(alarm);
 
-  // Audio — Cloud-TTS nur mit Key und wenn Text vorhanden; Fehler unkritisch (Geräte-TTS greift).
+  // Audio — cloud TTS only with a key and when text is present; failure is non-critical (device TTS kicks in).
   let audioUri: string | null = null;
   if (hasTtsKey() && text.length > 0) {
     try {

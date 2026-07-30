@@ -1,116 +1,116 @@
 /**
- * Zentrale Datenmodelle der App.
+ * Central data models of the app.
  *
- * Alle Module (UI, Storage, Scheduler, KI) teilen sich diese Typen. Sie sind
- * bewusst frei von React-/Native-Abhängigkeiten, damit reine Logik (Zeit,
- * Prompt-Bau) unabhängig getestet werden kann.
+ * All modules (UI, storage, scheduler, AI) share these types. They are
+ * deliberately free of React/Native dependencies so pure logic (time,
+ * prompt building) can be tested independently.
  */
 
-/** Wochentag als ISO-Zahl: 1 = Montag … 7 = Sonntag. */
+/** Weekday as ISO number: 1 = Monday … 7 = Sunday. */
 export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 export const WEEKDAYS: Weekday[] = [1, 2, 3, 4, 5, 6, 7];
 
 /**
- * Zustand eines Wochentags im Picker:
- *  - `off`    → klingelt an diesem Tag nicht (nicht markiert).
- *  - `once`   → klingelt in diesem Zyklus (aktuelle Woche) genau einmal, dann nie
- *               wieder (kleiner Punkt oben rechts im Button).
- *  - `weekly` → klingelt dauerhaft jede Woche (voll gefüllter Button).
+ * State of a weekday in the picker:
+ *  - `off`    → doesn't ring on this day (not marked).
+ *  - `once`   → rings exactly once in this cycle (current week), then never
+ *               again (small dot top-right on the button).
+ *  - `weekly` → rings permanently every week (fully filled button).
  */
 export type WeekdayMode = 'off' | 'once' | 'weekly';
 
-/** Kurzlabels für die UI (Index 0 = Montag). */
+/** Short labels for the UI (index 0 = Monday). */
 export const WEEKDAY_LABELS: Record<Weekday, string> = {
-  1: 'Mo',
-  2: 'Di',
-  3: 'Mi',
-  4: 'Do',
-  5: 'Fr',
-  6: 'Sa',
-  7: 'So',
+  1: 'Mon',
+  2: 'Tue',
+  3: 'Wed',
+  4: 'Thu',
+  5: 'Fri',
+  6: 'Sat',
+  7: 'Sun',
 };
 
 /**
- * Wie der Weck-Text zur Laufzeit entsteht:
- *  - `verbatim` → der eingegebene Text wird 1:1 vorgelesen (keine KI).
- *  - `ai`       → die KI erzeugt den Text (Grundlage siehe `aiBasis`).
+ * How the wake-up text is created at runtime:
+ *  - `verbatim` → the entered text is read out 1:1 (no AI).
+ *  - `ai`       → the AI generates the text (basis: see `aiBasis`).
  */
 export type AlarmSource = 'verbatim' | 'ai';
 
 /**
- * Woraus die KI schöpft (nur bei `source: 'ai'`):
- *  - `topic`  → vordefiniertes Thema.
- *  - `text`   → eigener Text als Inspiration; die KI erfasst Emotion + Semantik
- *               und verstärkt sie leicht.
- *  - `source` → externe Quelle (Text/Link), die die KI zu einem Szenario verarbeitet.
+ * What the AI draws from (only when `source: 'ai'`):
+ *  - `topic`  → predefined topic.
+ *  - `text`   → own text as inspiration; the AI picks up emotion + semantics
+ *               and amplifies them slightly.
+ *  - `source` → external source (text/link) that the AI turns into a scenario.
  */
 export type AiBasis = 'topic' | 'text' | 'source';
 
-/** Sprech-Ton (Delivery-Stil). Registry: `constants/tones.ts`. */
+/** Speaking tone (delivery style). Registry: `constants/tones.ts`. */
 export type ToneId =
-  | 'sanft'
-  | 'froehlich'
-  | 'energetisch'
-  | 'motivierend'
-  | 'dramatisch'
-  | 'trocken'
-  | 'streng';
+  | 'gentle'
+  | 'cheerful'
+  | 'energetic'
+  | 'motivating'
+  | 'dramatic'
+  | 'dry'
+  | 'strict';
 
-/** Thema für die KI-Generierung. Registry: `constants/topics.ts`. */
-export type TopicId = 'motivation' | 'dankbarkeit' | 'tagesfokus' | 'achtsamkeit' | 'humor';
+/** Topic for AI generation. Registry: `constants/topics.ts`. */
+export type TopicId = 'motivation' | 'gratitude' | 'focus' | 'mindfulness' | 'humor';
 
-/** Stimme für die TTS-Ausgabe. Registry: `constants/voices.ts`. */
-export type VoiceId = 'warm' | 'klar' | 'tief';
+/** Voice for the TTS output. Registry: `constants/voices.ts`. */
+export type VoiceId = 'warm' | 'clear' | 'deep';
 
-/** Ein einzelner Wecker. */
+/** A single alarm. */
 export interface Alarm {
   id: string;
-  /** Stunde 0–23. */
+  /** Hour 0–23. */
   hour: number;
   /** Minute 0–59. */
   minute: number;
-  /** Wochentage, an denen der Wecker dauerhaft jede Woche klingelt (`weekly`). */
+  /** Weekdays on which the alarm rings permanently every week (`weekly`). */
   weekdays: Weekday[];
   /**
-   * Wochentage, an denen der Wecker in diesem Zyklus genau einmal klingelt
-   * (`once`) und danach nicht mehr. Schließt sich pro Tag mit `weekdays` aus.
+   * Weekdays on which the alarm rings exactly once in this cycle (`once`)
+   * and never again afterwards. Mutually exclusive with `weekdays` per day.
    */
   onceDays: Weekday[];
   label: string;
   enabled: boolean;
 
-  /** Wie der Weck-Text entsteht. */
+  /** How the wake-up text is created. */
   source: AlarmSource;
-  /** Der (zuletzt) vorzulesende Text. Bei `verbatim` der Eingabetext selbst. */
+  /** The (most recently) spoken text. For `verbatim`, the input text itself. */
   text: string;
-  /** Sprech-Ton — unabhängig vom Inhalt. */
+  /** Speaking tone — independent of content. */
   tone: ToneId;
-  /** Stimme für die Sprachausgabe. */
+  /** Voice for the speech output. */
   voice: VoiceId;
 
-  /** Grundlage der KI-Generierung (nur bei `source: 'ai'`). */
+  /** Basis of the AI generation (only when `source: 'ai'`). */
   aiBasis?: AiBasis;
-  /** Thema (bei `aiBasis: 'topic'`). */
+  /** Topic (when `aiBasis: 'topic'`). */
   topic?: TopicId;
-  /** Eigener Text als KI-Inspiration (bei `aiBasis: 'text'`). */
+  /** Own text as AI inspiration (when `aiBasis: 'text'`). */
   basisText?: string;
-  /** Externe Quelle: URL oder eingefügter Text (bei `aiBasis: 'source'`). */
+  /** External source: URL or pasted text (when `aiBasis: 'source'`). */
   sourceUrl?: string;
 
-  /** IDs der geplanten Notifications (eine pro Wochentag). Vom Scheduler gesetzt. */
+  /** IDs of the scheduled notifications (one per weekday). Set by the scheduler. */
   scheduledIds: string[];
 }
 
-/** Von der KI erzeugter Weck-Inhalt, pro Alarm zwischengespeichert. */
+/** AI-generated wake-up content, cached per alarm. */
 export interface GeneratedContent {
   alarmId: string;
-  /** Der vorgelesene/angezeigte Text. */
+  /** The spoken/displayed text. */
   text: string;
-  /** Lokaler oder Remote-URI der Audiodatei; null → Geräte-TTS als Fallback. */
+  /** Local or remote URI of the audio file; null → device TTS as fallback. */
   audioUri: string | null;
-  /** Welche Quelle den Text erzeugt hat (für Debug/Anzeige). */
+  /** Which source produced the text (for debug/display). */
   source: 'claude' | 'mock' | 'user';
-  /** Unix-ms, wann erzeugt. */
+  /** Unix ms when generated. */
   generatedAt: number;
 }

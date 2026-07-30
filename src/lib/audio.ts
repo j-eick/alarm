@@ -1,11 +1,11 @@
 /**
- * Wiedergabe des Weck-Inhalts.
+ * Playback of the wake-up content.
  *
- * Zwei Modi, hinter einer schmalen API:
- *  - `audioUri` vorhanden  → Abspielen der Cloud-TTS-Datei via expo-audio.
- *  - `audioUri` == null    → Vorlesen des Textes via Geräte-TTS (expo-speech).
+ * Two modes, behind a narrow API:
+ *  - `audioUri` present  → plays the cloud TTS file via expo-audio.
+ *  - `audioUri` == null  → reads the text aloud via device TTS (expo-speech).
  *
- * Der aufrufende Screen kennt diese Unterscheidung nicht — er ruft nur
+ * The calling screen doesn't know about this distinction — it only calls
  * `playWake`/`stopWake`.
  */
 
@@ -23,11 +23,11 @@ function disposePlayer(): void {
   }
 }
 
-/** Startet die Wiedergabe des Weck-Inhalts. */
+/** Starts playback of the wake-up content. */
 export async function playWake(content: GeneratedContent): Promise<void> {
   stopWake();
 
-  // Auch im Stumm-Modus abspielen (typisch für einen Wecker).
+  // Play even in silent mode (typical for an alarm).
   await setAudioModeAsync({ playsInSilentMode: true }).catch(() => undefined);
 
   if (content.audioUri) {
@@ -36,10 +36,10 @@ export async function playWake(content: GeneratedContent): Promise<void> {
     return;
   }
 
-  Speech.speak(content.text, { language: 'de-DE', rate: 1.0, pitch: 1.0 });
+  Speech.speak(content.text, { language: 'en-US', rate: 1.0, pitch: 1.0 });
 }
 
-/** Stoppt jede laufende Wiedergabe und gibt Ressourcen frei. */
+/** Stops any running playback and releases resources. */
 export function stopWake(): void {
   disposePlayer();
   Speech.stop();

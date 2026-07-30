@@ -3,24 +3,24 @@ import type { ToneId } from '@/types';
 export interface ToneOption {
   id: ToneId;
   label: string;
-  /** Kurzbeschreibung des Sprech-Stils für den KI-Prompt / die TTS-Delivery. */
+  /** Short description of the speaking style for the AI prompt / TTS delivery. */
   promptHint: string;
-  /** Sprechtempo für die TTS-Delivery (Fish Audio `prosody.speed`, 0.5–2.0). Default 1.0. */
+  /** Speaking rate for TTS delivery (Fish Audio `prosody.speed`, 0.5–2.0). Default 1.0. */
   ttsSpeed?: number;
 }
 
 /**
- * Sprech-Töne (Delivery-Stil), unabhängig vom Inhalt. Reihenfolge = Anzeige.
- * Erweiterbar per Registry-Muster (neuer Ton = Eintrag hier + in `ToneId`).
+ * Speaking tones (delivery style), independent of content. Order = display order.
+ * Extensible via registry pattern (new tone = entry here + in `ToneId`).
  */
 export const TONE_OPTIONS: ToneOption[] = [
-  { id: 'sanft', label: 'Sanft', promptHint: 'behutsam, leise und beruhigend', ttsSpeed: 0.8 },
-  { id: 'froehlich', label: 'Fröhlich', promptHint: 'gut gelaunt, positiv und warm', ttsSpeed: 1.1 },
-  { id: 'energetisch', label: 'Energetisch', promptHint: 'treibend und wach machend, voller Energie', ttsSpeed: 1.35 },
-  { id: 'motivierend', label: 'Motivierend', promptHint: 'aufbauend und bestärkend, wie ein Coach', ttsSpeed: 1.2 },
-  { id: 'dramatisch', label: 'Dramatisch', promptHint: 'pathetisch und kinoreif, große Geste', ttsSpeed: 0.85 },
-  { id: 'trocken', label: 'Trocken', promptHint: 'lakonisch, mit trockenem Humor', ttsSpeed: 0.95 },
-  { id: 'streng', label: 'Streng', promptHint: 'bestimmt und kompromisslos, keine Ausreden', ttsSpeed: 1.0 },
+  { id: 'gentle', label: 'Gentle', promptHint: 'careful, quiet and soothing', ttsSpeed: 0.8 },
+  { id: 'cheerful', label: 'Cheerful', promptHint: 'upbeat, positive and warm', ttsSpeed: 1.1 },
+  { id: 'energetic', label: 'Energetic', promptHint: 'driving and rousing, full of energy', ttsSpeed: 1.35 },
+  { id: 'motivating', label: 'Motivating', promptHint: 'uplifting and encouraging, like a coach', ttsSpeed: 1.2 },
+  { id: 'dramatic', label: 'Dramatic', promptHint: 'grandiose and cinematic, big gesture', ttsSpeed: 0.85 },
+  { id: 'dry', label: 'Dry', promptHint: 'laconic, with dry humor', ttsSpeed: 0.95 },
+  { id: 'strict', label: 'Strict', promptHint: 'firm and uncompromising, no excuses', ttsSpeed: 1.0 },
 ];
 
 const TONE_BY_ID: Record<ToneId, ToneOption> = Object.fromEntries(
@@ -31,4 +31,4 @@ export function toneOption(id: ToneId): ToneOption {
   return TONE_BY_ID[id];
 }
 
-export const DEFAULT_TONE: ToneId = 'motivierend';
+export const DEFAULT_TONE: ToneId = 'motivating';

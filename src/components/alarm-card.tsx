@@ -21,28 +21,28 @@ interface AlarmCardProps {
 
 function weekdaysSummary(alarm: Alarm): string {
   const once = alarm.onceDays ?? [];
-  if (alarm.weekdays.length === 0 && once.length === 0) return 'Einmalig';
-  if (alarm.weekdays.length === 7) return 'Täglich';
-  // Dauerhafte und einmalige Tage zusammen, aufsteigend; `once` mit Punkt markiert.
+  if (alarm.weekdays.length === 0 && once.length === 0) return 'Once';
+  if (alarm.weekdays.length === 7) return 'Daily';
+  // Recurring and one-off days combined, ascending; `once` days marked with a dot.
   const days = [...new Set([...alarm.weekdays, ...once])].sort((a, b) => a - b);
   return days.map((d) => (once.includes(d) ? `${WEEKDAY_LABELS[d]}•` : WEEKDAY_LABELS[d])).join(' · ');
 }
 
-/** Woher der Inhalt stammt — kurz für die Karte. */
+/** Where the content comes from — short form for the card. */
 function kindLabel(alarm: Alarm): string {
-  if (alarm.source === 'verbatim') return 'Eigener Text';
+  if (alarm.source === 'verbatim') return 'Own text';
   switch (alarm.aiBasis) {
     case 'text':
-      return 'KI · eigener Text';
+      return 'AI · own text';
     case 'source':
-      return 'KI · Quelle';
+      return 'AI · source';
     case 'topic':
     default:
-      return `KI · ${topicOption(alarm.topic ?? 'motivation').label}`;
+      return `AI · ${topicOption(alarm.topic ?? 'motivation').label}`;
   }
 }
 
-/** Listeneintrag eines Alarms mit Zeit, Meta und An/Aus-Schalter. Nach links swipen zeigt Löschen. */
+/** List entry for an alarm with time, meta and on/off switch. Swipe left to reveal delete. */
 export const AlarmCard = forwardRef<Swipeable, AlarmCardProps>(function AlarmCard(
   { alarm, onPress, onToggle, onDelete, onSwipeableWillOpen },
   ref,

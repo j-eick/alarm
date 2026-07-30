@@ -1,13 +1,13 @@
 /**
- * Zentrale App-Identität. Name/Claim hier ändern → wirkt überall (Header,
- * Navigations-Titel). Der native App-Name steht zusätzlich in app.json.
+ * Central app identity. Change name/tagline here → applies everywhere
+ * (header, navigation title). The native app name also lives in app.json.
  */
 
 export const APP_NAME = 'Attune';
 
-/** Ein-Zeilen-Claim, der das adaptive Konzept andeutet. */
-export const APP_TAGLINE = 'Weckt dich, wie du es gerade brauchst.';
+/** One-line tagline hinting at the adaptive concept. */
+export const APP_TAGLINE = 'Wakes you the way you need it right now.';
 
-/** Etwas längerer Untertitel für den Leerzustand. */
+/** Slightly longer subtitle for the empty state. */
 export const APP_PITCH =
-  'Wecktöne, die sich auf deine Verfassung, Stimmung und Ziele einstimmen — mal motivierend, mal sanft, mal kurz und knackig.';
+  'Wake-up sounds attuned to your state, mood and goals — sometimes motivating, sometimes gentle, sometimes short and snappy.';

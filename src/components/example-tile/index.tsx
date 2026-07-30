@@ -1,10 +1,10 @@
 /**
- * Kachel-Auswahl: exportiert die aktive Design-Variante als `ExampleTile`.
+ * Tile selection: exports the active design variant as `ExampleTile`.
  *
- * Neue Variante hinzufügen:
- *  1. Datei in variants/ anlegen (gleiche Props: ExampleTileProps).
- *  2. In VARIANTS registrieren.
- *  3. In constants/design.ts → TILE_VARIANT umschalten.
+ * Adding a new variant:
+ *  1. Create a file in variants/ (same props: ExampleTileProps).
+ *  2. Register it in VARIANTS.
+ *  3. Switch it on in constants/design.ts → TILE_VARIANT.
  */
 
 import type { ComponentType } from 'react';

@@ -14,7 +14,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        {/* expo-notifications hat keine Web-Implementierung → nur nativ einhängen. */}
+        {/* expo-notifications has no web implementation → mount natively only. */}
         {Platform.OS !== 'web' && <NotificationGateway />}
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -22,10 +22,10 @@ export default function RootLayout() {
             name="alarm/[id]"
             options={{
               headerShown: false,
-              // Transparentes Modal, damit der Hintergrund hinter dem Sheet durchscheint.
+              // Transparent modal so the background shows through behind the sheet.
               presentation: 'transparentModal',
-              // Kein Modal-Slide: der Backdrop liegt dadurch sofort & konstant über dem
-              // ganzen Viewport. Nur das Sheet selbst fährt (per Reanimated) von unten ein.
+              // No modal slide: the backdrop is therefore instantly & consistently over
+              // the whole viewport. Only the sheet itself slides in (via Reanimated) from below.
               animation: 'none',
               contentStyle: { backgroundColor: 'transparent' },
             }}
@@ -38,21 +38,21 @@ export default function RootLayout() {
 }
 
 /**
- * Initialisiert Notifications und leitet den Tap auf eine Alarm-Notification an
- * den Weck-Screen weiter.
+ * Initializes notifications and forwards taps on an alarm notification to
+ * the ring screen.
  *
- * Als eigene Komponente ausgelagert, damit `useLastNotificationResponse` nur auf
- * nativen Plattformen läuft: Auf Web ist `ExpoNotifications.getLastNotificationResponse`
- * nicht verfügbar und würde den ganzen Baum crashen. `Platform.OS` ist zur Laufzeit
- * konstant, daher ist das bedingte Mounten regelkonform (Rules of Hooks).
+ * Extracted into its own component so `useLastNotificationResponse` only
+ * runs on native platforms: on web, `ExpoNotifications.getLastNotificationResponse`
+ * is unavailable and would crash the whole tree. `Platform.OS` is constant at
+ * runtime, so this conditional mounting complies with the Rules of Hooks.
  */
 function NotificationGateway() {
-  // Notifications einmalig initialisieren (Channel + Rechte).
+  // Initialize notifications once (channel + permissions).
   useEffect(() => {
     void initNotifications();
   }, []);
 
-  // Tap auf eine Alarm-Notification → Weck-Screen öffnen.
+  // Tap on an alarm notification → open the ring screen.
   const lastResponse = Notifications.useLastNotificationResponse();
   const handledId = useRef<string | null>(null);
 

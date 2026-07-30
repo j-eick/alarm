@@ -11,18 +11,18 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 export type ColorSchemeName = 'light' | 'dark';
 
 /**
- * Optionaler Scheme-Override für einen Teilbaum.
+ * Optional scheme override for a subtree.
  *
- * Ohne Provider (Standard) folgt `useTheme` weiterhin dem System — die App
- * verhält sich unverändert. Die Dev-Gallery (`app/(dev)/gallery.tsx`) nutzt den
- * Provider, um Hell & Dunkel gleichzeitig nebeneinander zu rendern.
+ * Without a provider (default), `useTheme` still follows the system — the
+ * app behaves unchanged. The dev gallery (`app/(dev)/gallery.tsx`) uses the
+ * provider to render light & dark side by side simultaneously.
  */
 export const ThemeSchemeContext = createContext<ColorSchemeName | null>(null);
 
 export function useTheme() {
   const override = useContext(ThemeSchemeContext);
   const scheme = useColorScheme();
-  // Override gewinnt; sonst System; useColorScheme kann null/undefined liefern → 'light'.
+  // Override wins; otherwise system; useColorScheme can return null/undefined → 'light'.
   const active: ColorSchemeName = override ?? scheme ?? 'light';
 
   return Colors[active];

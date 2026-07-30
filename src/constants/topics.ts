@@ -3,20 +3,20 @@ import type { TopicId } from '@/types';
 export interface TopicOption {
   id: TopicId;
   label: string;
-  /** Steuert den KI-Prompt: worüber der Weck-Text handeln soll. */
+  /** Steers the AI prompt: what the wake-up text should be about. */
   promptHint: string;
 }
 
 /**
- * Themen für die „Überrasch mich"-Generierung. Reihenfolge = Anzeige.
- * Erweiterbar per Registry-Muster (neues Thema = Eintrag hier + in `TopicId`).
+ * Topics for the "surprise me" generation. Order = display order.
+ * Extensible via registry pattern (new topic = entry here + in `TopicId`).
  */
 export const TOPIC_OPTIONS: TopicOption[] = [
-  { id: 'motivation', label: 'Motivation', promptHint: 'ein motivierender Anstoß für den Tag' },
-  { id: 'dankbarkeit', label: 'Dankbarkeit', promptHint: 'ein dankbarer, wertschätzender Gedanke zum Start' },
-  { id: 'tagesfokus', label: 'Tagesfokus', promptHint: 'ein klarer Fokus für den Tag — das Wichtigste zuerst' },
-  { id: 'achtsamkeit', label: 'Achtsamkeit', promptHint: 'ein ruhiger, achtsamer Moment beim Aufwachen' },
-  { id: 'humor', label: 'Humor', promptHint: 'ein humorvoller, leichter Weckruf' },
+  { id: 'motivation', label: 'Motivation', promptHint: 'a motivating push for the day' },
+  { id: 'gratitude', label: 'Gratitude', promptHint: 'a grateful, appreciative thought to start with' },
+  { id: 'focus', label: 'Focus', promptHint: 'a clear focus for the day — the most important thing first' },
+  { id: 'mindfulness', label: 'Mindfulness', promptHint: 'a calm, mindful moment while waking up' },
+  { id: 'humor', label: 'Humor', promptHint: 'a humorous, light-hearted wake-up call' },
 ];
 
 const TOPIC_BY_ID: Record<TopicId, TopicOption> = Object.fromEntries(

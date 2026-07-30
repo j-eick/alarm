@@ -1,11 +1,11 @@
 /**
- * Prompt-Bau für die KI-Generierung.
+ * Prompt construction for AI generation.
  *
- * Reine Funktionen ohne Seiteneffekte. Der Ton steuert den Sprech-Stil, die
- * `aiBasis` steuert den Inhalt:
- *  - topic  → vordefiniertes Thema.
- *  - text   → eigener Text; Emotion + Semantik erfassen und leicht verstärken.
- *  - source → aus extrahiertem Quelltext ein kurzes Weck-Szenario bauen.
+ * Pure functions with no side effects. The tone steers the speaking style,
+ * the `aiBasis` steers the content:
+ *  - topic  → predefined topic.
+ *  - text   → own text; pick up emotion + semantics and amplify them slightly.
+ *  - source → build a short wake-up scenario from extracted source text.
  */
 
 import { toneOption } from '@/constants/tones';
@@ -13,62 +13,62 @@ import { DEFAULT_TOPIC, topicOption } from '@/constants/topics';
 import type { Alarm, ToneId } from '@/types';
 
 const SYSTEM_BASE =
-  'Du bist ein Aufwach-Sprecher für eine Wecker-App. Sprich den Nutzer direkt und ' +
-  'persönlich an (Du-Form). Antworte auf Deutsch mit 2–4 Sätzen, die man in ' +
-  '~20–30 Sekunden vorlesen kann. Kein Markdown, keine Aufzählungen, keine Emojis — ' +
-  'nur gesprochener Fließtext.';
+  'You are a wake-up speaker for an alarm app. Address the user directly and ' +
+  'personally. Respond in English with 2–4 sentences that can be read aloud in ' +
+  '~20–30 seconds. No markdown, no bullet points, no emojis — ' +
+  'just spoken prose.';
 
-/** System-Prompt inkl. gewünschtem Sprech-Ton. */
+/** System prompt including the desired speaking tone. */
 export function buildSystemPrompt(tone: ToneId): string {
-  return `${SYSTEM_BASE} Halte den Ton ${toneOption(tone).promptHint}.`;
+  return `${SYSTEM_BASE} Keep the tone ${toneOption(tone).promptHint}.`;
 }
 
 /**
- * User-Prompt je nach Grundlage. `sourceContent` ist der bereits eingelesene
- * externe Quelltext (nur bei `aiBasis: 'source'`).
+ * User prompt depending on the basis. `sourceContent` is the already-fetched
+ * external source text (only for `aiBasis: 'source'`).
  */
 export function buildUserPrompt(alarm: Alarm, sourceContent?: string): string {
   switch (alarm.aiBasis) {
     case 'text': {
       const t = (alarm.basisText ?? '').trim();
       return (
-        'Nimm den folgenden Text als Grundlage. Erfasse seine Emotion und Bedeutung ' +
-        'und verstärke sie leicht, ohne den Sinn zu verändern oder zu übertreiben. ' +
-        `Forme daraus einen gesprochenen Weckruf.\n\nText: „${t}"`
+        'Take the following text as a basis. Pick up its emotion and meaning ' +
+        'and amplify them slightly, without changing the meaning or overdoing it. ' +
+        `Shape it into a spoken wake-up call.\n\nText: "${t}"`
       );
     }
     case 'source': {
       const c = (sourceContent ?? '').trim();
       return (
-        'Der folgende Inhalt stammt aus einer externen Quelle. Erstelle daraus ein ' +
-        'kurzes, stimmiges Weck-Szenario, das den Nutzer auf den Tag einstimmt — ' +
-        `greife das Wesentliche auf, ohne wörtlich zu zitieren.\n\nQuelle: „${c}"`
+        'The following content comes from an external source. Create a short, ' +
+        'coherent wake-up scenario from it that gets the user in the mood for the day — ' +
+        `pick up the essentials without quoting verbatim.\n\nSource: "${c}"`
       );
     }
     case 'topic':
     default: {
       const t = topicOption(alarm.topic ?? DEFAULT_TOPIC);
-      return `Wecke mich mit etwas zum Thema „${t.label}": ${t.promptHint}.`;
+      return `Wake me up with something about "${t.label}": ${t.promptHint}.`;
     }
   }
 }
 
-/** Deterministischer Fallback-Text ohne KI (Mock-Modus / Offline). */
+/** Deterministic fallback text without AI (mock mode / offline). */
 export function mockWakeText(alarm: Alarm): string {
   const tone = toneOption(alarm.tone);
   switch (alarm.aiBasis) {
     case 'text': {
       const t = (alarm.basisText ?? '').trim();
       return t
-        ? `Erinnere dich: ${t} — und genau damit startest du jetzt, ${tone.label.toLowerCase()} in den Tag.`
-        : 'Steh auf und mach deinen Text zur Wirklichkeit — ein Schritt nach dem anderen.';
+        ? `Remember: ${t} — and that's exactly what you're starting your day with now, ${tone.label.toLowerCase()}.`
+        : 'Get up and turn your text into reality — one step at a time.';
     }
     case 'source':
-      return 'Dein Tag beginnt mit dem, was dich gerade beschäftigt. Nimm es auf und leg los — ein klarer erster Schritt genügt.';
+      return 'Your day starts with what you have on your mind right now. Take it in and get going — one clear first step is enough.';
     case 'topic':
     default: {
       const t = topicOption(alarm.topic ?? DEFAULT_TOPIC);
-      return `Guten Morgen! Zeit für ${t.label.toLowerCase()} — ${t.promptHint}. Ein Schritt nach dem anderen.`;
+      return `Good morning! Time for ${t.label.toLowerCase()} — ${t.promptHint}. One step at a time.`;
     }
   }
 }

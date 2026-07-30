@@ -1,4 +1,4 @@
-/** Erzeugt einen neuen Alarm-Entwurf mit sinnvollen Defaults. */
+/** Creates a new alarm draft with sensible defaults. */
 
 import { DEFAULT_TONE } from '@/constants/tones';
 import { DEFAULT_TOPIC } from '@/constants/topics';
@@ -11,9 +11,9 @@ export function createAlarmDraft(): Alarm {
     id: createId(),
     hour: 7,
     minute: 0,
-    weekdays: [1, 2, 3, 4, 5], // Mo–Fr (dauerhaft)
+    weekdays: [1, 2, 3, 4, 5], // Mon–Fri (permanent)
     onceDays: [],
-    label: 'Wecker',
+    label: 'Alarm',
     enabled: true,
     source: 'ai',
     text: '',

@@ -6,7 +6,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { greeting } from '@/lib/time';
 
-/** Startseiten-Kopf: zeitabhängiger Gruß, Wortmarke, Claim. Präsentational. */
+/** Home screen header: time-dependent greeting, wordmark, tagline. Presentational. */
 export function AppHeader() {
   const theme = useTheme();
 

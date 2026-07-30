@@ -13,20 +13,20 @@ import { useTheme } from '@/hooks/use-theme';
 import { WEEKDAYS, WEEKDAY_LABELS, type Weekday, type WeekdayMode } from '@/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-// Kurze, weiche Farbüberblendung beim Zustandswechsel.
+// Short, soft color crossfade on state change.
 const FADE_DURATION = 180;
 
 interface WeekdayPickerProps {
-  /** Dauerhaft aktive Tage (jede Woche). */
+  /** Permanently active days (every week). */
   weekly: Weekday[];
-  /** Tage, die in diesem Zyklus genau einmal klingeln. */
+  /** Days that ring exactly once in this cycle. */
   once: Weekday[];
   onChange: (next: { weekly: Weekday[]; once: Weekday[] }) => void;
 }
 
 const sortDays = (days: Weekday[]) => [...days].sort((a, b) => a - b);
 
-/** Nächster Zustand im Zyklus: off → once → weekly → off. */
+/** Next state in the cycle: off → once → weekly → off. */
 function nextMode(mode: WeekdayMode): WeekdayMode {
   if (mode === 'off') return 'once';
   if (mode === 'once') return 'weekly';
@@ -34,9 +34,9 @@ function nextMode(mode: WeekdayMode): WeekdayMode {
 }
 
 /**
- * Wochentag-Auswahl mit drei Zuständen pro Tag: nicht markiert (`off`),
- * einmalig in diesem Zyklus (`once`, kleiner Punkt oben rechts) und dauerhaft
- * jede Woche (`weekly`, voll gefüllt). Tippen schaltet zyklisch weiter.
+ * Weekday picker with three states per day: not marked (`off`), once in
+ * this cycle (`once`, small dot top-right) and permanently every week
+ * (`weekly`, fully filled). Tapping cycles through the states.
  */
 export function WeekdayPicker({ weekly, once, onChange }: WeekdayPickerProps) {
   const modeOf = (day: Weekday): WeekdayMode =>
@@ -72,20 +72,20 @@ interface WeekdayButtonProps {
 }
 
 /**
- * Einzelner Wochentag-Button. `weekly` blendet Hintergrund und Rand weich in
- * die Akzentfarbe über; `once` zeigt einen kleinen Akzent-Punkt oben rechts,
- * ohne den Button zu füllen. Die Textfarbe wird bewusst direkt (ohne Animation)
- * gesetzt, damit sie auf beiden Hintergründen gut lesbar bleibt.
+ * Single weekday button. `weekly` softly crossfades background and border
+ * into the accent color; `once` shows a small accent dot top-right, without
+ * filling the button. Text color is deliberately set directly (without
+ * animation) so it stays legible on both backgrounds.
  */
 function WeekdayButton({ label, mode, onPress }: WeekdayButtonProps) {
   const theme = useTheme();
   const filled = mode === 'weekly';
 
-  // 0 = nicht gefüllt, 1 = gefüllt (weekly) — sanft interpoliert.
+  // 0 = not filled, 1 = filled (weekly) — softly interpolated.
   const fill = useDerivedValue(() => withTiming(filled ? 1 : 0, { duration: FADE_DURATION }));
-  // Punkt für den `once`-Zustand.
+  // Dot for the `once` state.
   const dot = useDerivedValue(() => withTiming(mode === 'once' ? 1 : 0, { duration: FADE_DURATION }));
-  // Kleiner Druck-Effekt, unabhängig vom Zustand.
+  // Small press effect, independent of state.
   const pressed = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({

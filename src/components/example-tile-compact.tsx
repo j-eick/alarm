@@ -1,7 +1,7 @@
 /**
- * Kompakte Beispiel-Kachel (Icon + Kurztitel) für die Reihe nebeneinander
- * über der Weckerliste. Gleiche Bildsprache wie „tile/v1-gradient-glow"
- * (Farbverlauf + Icon), nur reduziert. Präsentational.
+ * Compact example tile (icon + short title) for the row displayed side by
+ * side above the alarm list. Same visual language as "tile/v1-gradient-glow"
+ * (gradient + icon), just reduced. Presentational.
  */
 
 import Ionicons from '@expo/vector-icons/Ionicons';

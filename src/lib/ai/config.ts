@@ -1,13 +1,13 @@
 /**
- * Zentrale KI-Konfiguration.
+ * Central AI configuration.
  *
- * Keys/Modelle kommen aus Umgebungsvariablen (Expo inlined `EXPO_PUBLIC_*` zur
- * Build-Zeit). Ist kein Key gesetzt, läuft die App automatisch im Mock-Modus.
+ * Keys/models come from environment variables (Expo inlines `EXPO_PUBLIC_*`
+ * at build time). If no key is set, the app automatically runs in mock mode.
  *
- * ⚠️ Sicherheit: In dieser Prototyp-Iteration werden die Keys im Client
- * gehalten und direkt aufgerufen. Für ein Release gehört ein Backend-Proxy
- * davor — dann muss hier nur `anthropicBaseUrl`/`ttsBaseUrl` auf den Proxy
- * zeigen; die Provider-Implementierungen bleiben unverändert.
+ * ⚠️ Security: in this prototype iteration, keys are held client-side and
+ * called directly. A release needs a backend proxy in front — then only
+ * `anthropicBaseUrl`/`ttsBaseUrl` need to point at the proxy here; the
+ * provider implementations stay unchanged.
  */
 
 const env = process.env;
@@ -19,7 +19,7 @@ export const aiConfig = {
     baseUrl: env.EXPO_PUBLIC_ANTHROPIC_BASE_URL ?? 'https://api.anthropic.com/v1/messages',
     maxTokens: 400,
   },
-  /** Cloud-TTS (Fish Audio). */
+  /** Cloud TTS (Fish Audio). */
   tts: {
     apiKey: env.EXPO_PUBLIC_FISHAUDIO_API_KEY ?? '',
     model: env.EXPO_PUBLIC_FISHAUDIO_MODEL ?? 's2.1-pro-free',
@@ -27,12 +27,12 @@ export const aiConfig = {
   },
 } as const;
 
-/** Ist ein Text-Key vorhanden? Sonst → Mock-Text. */
+/** Is a text key present? Otherwise → mock text. */
 export function hasTextKey(): boolean {
   return aiConfig.anthropic.apiKey.length > 0;
 }
 
-/** Ist ein Cloud-TTS-Key vorhanden? Sonst → Geräte-TTS beim Abspielen. */
+/** Is a cloud TTS key present? Otherwise → device TTS during playback. */
 export function hasTtsKey(): boolean {
   return aiConfig.tts.apiKey.length > 0;
 }

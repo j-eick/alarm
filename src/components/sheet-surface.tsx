@@ -12,11 +12,11 @@ interface SheetSurfaceProps {
 }
 
 /**
- * Oberfläche des hochschiebenden Sheets. Der Look wird zentral über
- * SHEET_STYLE (constants/design.ts) gesteuert:
- *  - 'glass' → Blur + leichte Transparenz (Hintergrund scheint durch)
- *  - 'solid' → deckende Fläche (Effekt komplett aus)
- * So lässt sich der Effekt mit einem Wort entfernen.
+ * Surface of the sheet that slides up. The look is controlled centrally via
+ * SHEET_STYLE (constants/design.ts):
+ *  - 'glass' → blur + slight transparency (background shows through)
+ *  - 'solid' → opaque surface (effect fully off)
+ * This lets the effect be removed with a single word.
  */
 export function SheetSurface({ children, style }: SheetSurfaceProps) {
   const theme = useTheme();
@@ -26,9 +26,9 @@ export function SheetSurface({ children, style }: SheetSurfaceProps) {
     return <View style={[styles.surface, { backgroundColor: theme.background }, style]}>{children}</View>;
   }
 
-  // 'glass': volle Hintergrundhelligkeit wie der Hauptbildschirm, nur mit
-  // dezentem Blur/Transparenz. Hohe Deckkraft → klarer Kontrast zum
-  // abgedunkelten Backdrop; der Blur scheint nur noch leicht durch.
+  // 'glass': full background brightness like the main screen, just with a
+  // subtle blur/transparency. High opacity → clear contrast against the
+  // darkened backdrop; the blur only shows through slightly.
   const tint = scheme === 'dark' ? 'dark' : 'light';
   const overlay = scheme === 'dark' ? 'rgba(0,0,0,0.86)' : 'rgba(255,255,255,0.92)';
 

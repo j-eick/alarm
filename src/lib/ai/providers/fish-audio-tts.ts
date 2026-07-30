@@ -1,13 +1,13 @@
 /**
- * TTS-Provider: Fish Audio (Cloud, Modell `s2.1-pro-free`).
+ * TTS provider: Fish Audio (cloud, model `s2.1-pro-free`).
  *
- * Wandelt Text in eine MP3-Datei um und speichert sie im Cache-Verzeichnis;
- * gibt den Datei-URI zurück, den expo-audio abspielen kann. Ohne Key wird
- * dieser Provider nicht verwendet (Orchestrator prüft `hasTtsKey`), und das
- * Abspielen fällt auf Geräte-TTS (expo-speech) zurück.
+ * Converts text into an MP3 file and stores it in the cache directory;
+ * returns the file URI, which expo-audio can play. Without a key, this
+ * provider is not used (the orchestrator checks `hasTtsKey`), and playback
+ * falls back to device TTS (expo-speech).
  *
- * Hinweis: Dieser Pfad ist erst mit gültigem Key aktiv und sollte dann mit
- * einem echten Key getestet werden.
+ * Note: this path only becomes active with a valid key and should then be
+ * tested with a real key.
  */
 
 import { File, Paths } from 'expo-file-system';
@@ -19,13 +19,13 @@ import type { VoiceId } from '@/types';
 const env = process.env;
 
 /**
- * Zuordnung `VoiceId → Fish-Audio reference_id`. Platzhalter — ohne env-Wert
- * wird kein `reference_id` gesendet und Fish Audio nutzt seine Standardstimme.
+ * Mapping `VoiceId → Fish Audio reference_id`. Placeholder — without an env
+ * value, no `reference_id` is sent and Fish Audio uses its default voice.
  */
 const REFERENCE_IDS: Record<VoiceId, string | undefined> = {
   warm: env.EXPO_PUBLIC_FISHAUDIO_VOICE_WARM || undefined,
-  klar: env.EXPO_PUBLIC_FISHAUDIO_VOICE_KLAR || undefined,
-  tief: env.EXPO_PUBLIC_FISHAUDIO_VOICE_TIEF || undefined,
+  clear: env.EXPO_PUBLIC_FISHAUDIO_VOICE_CLEAR || undefined,
+  deep: env.EXPO_PUBLIC_FISHAUDIO_VOICE_DEEP || undefined,
 };
 
 export const fishAudioTtsProvider: TtsProvider = {
