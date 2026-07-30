@@ -21,16 +21,16 @@ import { WeekdayPicker } from '@/components/weekday-picker';
 import { PRESET_OPTIONS, presetOption } from '@/constants/presets';
 import { Spacing } from '@/constants/theme';
 import { TONE_OPTIONS, toneOption } from '@/constants/tones';
-import { TOPIC_OPTIONS, topicOption } from '@/constants/topics';
+import { DEFAULT_TOPIC, TOPIC_OPTIONS, topicOption } from '@/constants/topics';
 import { VOICE_OPTIONS, voiceOption } from '@/constants/voices';
 import { useTheme } from '@/hooks/use-theme';
 import { useAlarms } from '@/hooks/use-alarms';
-import { generateWakeContent } from '@/lib/ai';
+import { generateWakeContent, generateWakeText } from '@/lib/ai';
 import { createAlarmDraft } from '@/lib/alarm-factory';
 import { playWake, stopWake } from '@/lib/audio';
 import { settingsRepo } from '@/lib/storage';
 import { dateFromHourMinute, formatTime } from '@/lib/time';
-import type { AiBasis, Alarm } from '@/types';
+import type { AiBasis, Alarm, TopicId } from '@/types';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -40,10 +40,11 @@ const OVERSHOOT_PAD = 120;
 const CLOSE_DISTANCE = 120;
 const CLOSE_VELOCITY = 800;
 
-type Step = 'how' | 'preset' | 'basis' | 'toneVoice' | 'schedule';
+type Step = 'how' | 'preset' | 'source' | 'draft' | 'toneVoice' | 'schedule';
 type Mode = 'preset' | 'ki';
 
-const KI_FLOW: Step[] = ['how', 'basis', 'toneVoice', 'schedule'];
+/** The real 4-step stepper for AI-composed wake-up sounds: Source → Draft → Tone & Voice → Schedule. */
+const KI_FLOW: Step[] = ['how', 'source', 'draft', 'toneVoice', 'schedule'];
 const PRESET_FLOW: Step[] = ['how', 'preset', 'schedule'];
 
 /**
@@ -65,7 +66,7 @@ function decisionCrumbs(step: Step, draft: Alarm): string[] {
     }
   };
   const out: string[] = [];
-  if (step === 'toneVoice' || step === 'schedule') out.push(basisLabel());
+  if (step === 'draft' || step === 'toneVoice' || step === 'schedule') out.push(basisLabel());
   if (step === 'schedule') {
     out.push(`Tone · ${toneOption(draft.tone).label}`);
     out.push(`Voice · ${voiceOption(draft.voice).label}`);
@@ -163,20 +164,51 @@ export default function AlarmEditorScreen() {
 
   const patch = (changes: Partial<Alarm>) => setDraft((d) => ({ ...d, ...changes }));
 
-  // --- Basis (AI input) --------------------------------------------------------
+  // --- Source & draft (AI input) ------------------------------------------------
 
   const applyTextMode = (value: string, asVerbatim: boolean) => {
     if (asVerbatim) patch({ source: 'verbatim', text: value });
     else patch({ source: 'ai', aiBasis: 'text', basisText: value });
   };
 
-  const selectBasisTab = (tab: AiBasis) => {
+  /** Generates (or regenerates, for "Re-roll") a topic-based AI draft. */
+  const generateDraft = async (topicOverride?: TopicId) => {
+    const targetTopic = topicOverride ?? draft.topic ?? DEFAULT_TOPIC;
+    setGenError(null);
+    setGenerating(true);
+    try {
+      const { text } = await generateWakeText({
+        ...draft,
+        source: 'ai',
+        aiBasis: 'topic',
+        topic: targetTopic,
+      });
+      patch({ topic: targetTopic, text });
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : 'Could not generate.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  /** Step 1 "Source": commits the chosen basis and advances to the Draft step. */
+  const chooseSource = (tab: AiBasis) => {
+    // Leaving an eagerly-generated topic draft behind: clear it so it can't leak into
+    // the Tone & Voice preview for a branch that hasn't generated anything yet. Only
+    // applies when actually switching away from 'topic' — never touches basisText/text
+    // when merely re-confirming the same branch (e.g. re-opening an existing alarm).
+    const leavingTopicDraft = basisTab === 'topic' && tab !== 'topic';
     setBasisTab(tab);
     setGenError(null);
-    if (tab === 'topic') patch({ source: 'ai', aiBasis: 'topic' });
-    else if (tab === 'text') applyTextMode(textValue, verbatim);
-    else {
-      patch({ source: 'ai', aiBasis: 'source', sourceUrl: sourceValue });
+    setStep('draft');
+    if (tab === 'topic') {
+      patch({ source: 'ai', aiBasis: 'topic' });
+      void generateDraft();
+    } else if (tab === 'text') {
+      if (leavingTopicDraft) patch({ text: '' });
+      applyTextMode(textValue, verbatim);
+    } else {
+      patch({ source: 'ai', aiBasis: 'source', sourceUrl: sourceValue, ...(leavingTopicDraft ? { text: '' } : {}) });
       if (!linkConsent) setShowConsent(true);
     }
   };
@@ -189,7 +221,7 @@ export default function AlarmEditorScreen() {
 
   const declineConsent = () => {
     setShowConsent(false);
-    selectBasisTab('topic');
+    chooseSource('topic');
   };
 
   // --- Preview ------------------------------------------------------------------
@@ -231,11 +263,7 @@ export default function AlarmEditorScreen() {
 
   const chooseMode = (m: Mode) => {
     setMode(m);
-    if (m === 'preset') setStep('preset');
-    else {
-      selectBasisTab(basisTab);
-      setStep('basis');
-    }
+    setStep(m === 'preset' ? 'preset' : 'source');
   };
 
   const choosePreset = (presetId: string) => {
@@ -264,7 +292,7 @@ export default function AlarmEditorScreen() {
 
   // Allowed to proceed?
   const canProceed =
-    step !== 'basis' ||
+    step !== 'draft' ||
     (basisTab === 'topic'
       ? true
       : basisTab === 'text'
@@ -362,45 +390,68 @@ export default function AlarmEditorScreen() {
               </>
             )}
 
-            {step === 'basis' && (
+            {step === 'source' && (
               <>
                 <ThemedText style={styles.stepTitle}>What should the AI draw from?</ThemedText>
-                <View style={styles.segmented}>
-                  {(
-                    [
-                      { id: 'topic', label: 'Topic' },
-                      { id: 'text', label: 'Own Text' },
-                      { id: 'source', label: 'Source' },
-                    ] as { id: AiBasis; label: string }[]
-                  ).map((t) => {
-                    const active = basisTab === t.id;
-                    return (
-                      <Pressable
-                        key={t.id}
-                        onPress={() => selectBasisTab(t.id)}
-                        style={[
-                          styles.segItem,
-                          { backgroundColor: active ? theme.accent : theme.backgroundElement },
-                        ]}>
-                        <ThemedText type="small" style={{ color: active ? theme.accentText : theme.text }}>
-                          {t.label}
-                        </ThemedText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                <OptionCard
+                  icon="shuffle-outline"
+                  title="Surprise Me"
+                  desc="Pick a topic — the AI writes the rest."
+                  onPress={() => chooseSource('topic')}
+                  theme={theme}
+                />
+                <OptionCard
+                  icon="create-outline"
+                  title="Own Text"
+                  desc="Type it in or dictate it yourself."
+                  onPress={() => chooseSource('text')}
+                  theme={theme}
+                />
+                <OptionCard
+                  icon="link-outline"
+                  title="From a Source"
+                  desc="Paste a link or text as inspiration."
+                  onPress={() => chooseSource('source')}
+                  theme={theme}
+                />
+              </>
+            )}
+
+            {step === 'draft' && (
+              <>
+                <ThemedText style={styles.stepTitle}>
+                  {basisTab === 'topic' ? 'Your Topic' : basisTab === 'text' ? 'Your Words' : 'Your Source'}
+                </ThemedText>
 
                 {basisTab === 'topic' && (
-                  <View style={styles.chipRow}>
-                    {TOPIC_OPTIONS.map((t) => (
-                      <Chip
-                        key={t.id}
-                        label={t.label}
-                        selected={draft.topic === t.id}
-                        onPress={() => patch({ topic: t.id })}
-                      />
-                    ))}
-                  </View>
+                  <>
+                    <View style={styles.chipRow}>
+                      {TOPIC_OPTIONS.map((t) => (
+                        <Chip
+                          key={t.id}
+                          label={t.label}
+                          selected={draft.topic === t.id}
+                          onPress={() => void generateDraft(t.id)}
+                        />
+                      ))}
+                    </View>
+                    <View style={[styles.previewBox, { backgroundColor: theme.backgroundElement }]}>
+                      <ThemedText type="small" themeColor={generating ? 'textSecondary' : undefined}>
+                        {generating ? 'Generating …' : draft.text || '—'}
+                      </ThemedText>
+                    </View>
+                    {genError && (
+                      <ThemedText type="small" style={{ color: theme.danger }}>
+                        {genError}
+                      </ThemedText>
+                    )}
+                    <PrimaryButton
+                      title="Re-roll"
+                      variant="ghost"
+                      loading={generating}
+                      onPress={() => void generateDraft()}
+                    />
+                  </>
                 )}
 
                 {basisTab === 'text' && (
@@ -566,7 +617,7 @@ export default function AlarmEditorScreen() {
                 <PrimaryButton title="Cancel" variant="neutral" onPress={animateClose} style={styles.actionButton} />
                 <PrimaryButton title="Save" onPress={() => void handleSave()} style={styles.actionButton} />
               </View>
-            ) : step === 'basis' || step === 'toneVoice' ? (
+            ) : step === 'draft' || step === 'toneVoice' ? (
               <PrimaryButton title="Next" onPress={goNext} disabled={!canProceed} />
             ) : null}
           </View>
@@ -651,8 +702,6 @@ const styles = StyleSheet.create({
   cardIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   cardBody: { flex: 1, gap: 2 },
   dot: { width: 14, height: 14, borderRadius: 7 },
-  segmented: { flexDirection: 'row', gap: Spacing.one },
-  segItem: { flex: 1, paddingVertical: Spacing.two, borderRadius: Spacing.two, alignItems: 'center' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   input: {
     borderRadius: Spacing.two,
