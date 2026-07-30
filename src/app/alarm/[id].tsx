@@ -86,7 +86,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function AlarmEditorScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, step: initialStepParam } = useLocalSearchParams<{ id: string; step?: string }>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { getById, saveAlarm } = useAlarms();
@@ -99,7 +99,7 @@ export default function AlarmEditorScreen() {
   );
 
   const [draft, setDraft] = useState<Alarm>(initial);
-  const [step, setStep] = useState<Step>('how');
+  const [step, setStep] = useState<Step>(initialStepParam === 'schedule' ? 'schedule' : 'how');
   const [mode, setMode] = useState<Mode>(initial.source === 'verbatim' ? 'ki' : 'ki');
   const [basisTab, setBasisTab] = useState<AiBasis>(
     initial.source === 'verbatim' ? 'text' : (initial.aiBasis ?? 'topic'),
