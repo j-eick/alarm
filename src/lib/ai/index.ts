@@ -26,9 +26,11 @@ export interface WakeText {
 
 /**
  * Just the text. Can throw if an external source (`aiBasis: 'source'`)
- * can't be read — callers should show this to the user.
+ * can't be read — callers should show this to the user. `variantIndex` only
+ * affects the mock fallback (picks between pre-written phrasings); the real
+ * Claude call already samples non-deterministically.
  */
-export async function generateWakeText(alarm: Alarm): Promise<WakeText> {
+export async function generateWakeText(alarm: Alarm, variantIndex?: number): Promise<WakeText> {
   if (alarm.source === 'verbatim') {
     return { text: alarm.text.trim(), source: 'user' };
   }
@@ -43,7 +45,7 @@ export async function generateWakeText(alarm: Alarm): Promise<WakeText> {
     systemPrompt: buildSystemPrompt(alarm.tone),
     userPrompt: buildUserPrompt(alarm, sourceContent),
     maxTokens: 400,
-    fallbackText: mockWakeText(alarm),
+    fallbackText: mockWakeText(alarm, variantIndex),
   };
 
   try {

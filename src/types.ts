@@ -58,7 +58,15 @@ export type ToneId =
   | 'strict';
 
 /** Topic for AI generation. Registry: `constants/topics.ts`. */
-export type TopicId = 'motivation' | 'gratitude' | 'focus' | 'mindfulness' | 'humor';
+export type TopicId =
+  | 'motivation'
+  | 'gratitude'
+  | 'focus'
+  | 'mindfulness'
+  | 'humor'
+  | 'confidence'
+  | 'curiosity'
+  | 'raw';
 
 /** Voice for the TTS output. Registry: `constants/voices.ts`. */
 export type VoiceId = 'warm' | 'clear' | 'deep';

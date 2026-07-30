@@ -9,7 +9,7 @@
  */
 
 import { toneOption } from '@/constants/tones';
-import { DEFAULT_TOPIC, topicOption } from '@/constants/topics';
+import { DEFAULT_TOPIC, topicOption, type TopicOption } from '@/constants/topics';
 import type { Alarm, ToneId } from '@/types';
 
 const SYSTEM_BASE =
@@ -53,8 +53,24 @@ export function buildUserPrompt(alarm: Alarm, sourceContent?: string): string {
   }
 }
 
-/** Deterministic fallback text without AI (mock mode / offline). */
-export function mockWakeText(alarm: Alarm): string {
+/**
+ * Distinct phrasing templates for the mock topic draft, applied to a topic's
+ * label/hint. Templates (not per-topic literals) so a new topic added to the
+ * registry automatically gets all variants — no second list to keep in sync.
+ */
+const MOCK_TOPIC_VARIANTS: ((topic: TopicOption) => string)[] = [
+  (topic) => `Good morning! Time for ${topic.label.toLowerCase()} — ${topic.promptHint}. One step at a time.`,
+  (topic) => `Rise and shine — today calls for ${topic.label.toLowerCase()}: ${topic.promptHint}. Let's go.`,
+  (topic) => `Here's your wake-up nudge: ${topic.promptHint}. That's ${topic.label.toLowerCase()}, right from the start.`,
+];
+
+/**
+ * Deterministic fallback text without AI (mock mode / offline). `variantIndex`
+ * picks between a few distinct pre-written phrasings for the `topic` basis
+ * (rotated via modulo) — without it, "Generate More" would look broken in
+ * mock mode by producing 3 identical suggestions.
+ */
+export function mockWakeText(alarm: Alarm, variantIndex = 0): string {
   const tone = toneOption(alarm.tone);
   switch (alarm.aiBasis) {
     case 'text': {
@@ -68,7 +84,8 @@ export function mockWakeText(alarm: Alarm): string {
     case 'topic':
     default: {
       const t = topicOption(alarm.topic ?? DEFAULT_TOPIC);
-      return `Good morning! Time for ${t.label.toLowerCase()} — ${t.promptHint}. One step at a time.`;
+      const variant = MOCK_TOPIC_VARIANTS[variantIndex % MOCK_TOPIC_VARIANTS.length];
+      return variant(t);
     }
   }
 }

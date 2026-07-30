@@ -17,6 +17,9 @@ export const TOPIC_OPTIONS: TopicOption[] = [
   { id: 'focus', label: 'Focus', promptHint: 'a clear focus for the day — the most important thing first' },
   { id: 'mindfulness', label: 'Mindfulness', promptHint: 'a calm, mindful moment while waking up' },
   { id: 'humor', label: 'Humor', promptHint: 'a humorous, light-hearted wake-up call' },
+  { id: 'confidence', label: 'Confidence', promptHint: 'a boost of self-belief for whatever the day brings' },
+  { id: 'curiosity', label: 'Curiosity', promptHint: 'a curious, adventurous outlook on what today might bring' },
+  { id: 'raw', label: 'Raw', promptHint: 'a raw, unfiltered truth to start the day with — no sugarcoating' },
 ];
 
 const TOPIC_BY_ID: Record<TopicId, TopicOption> = Object.fromEntries(

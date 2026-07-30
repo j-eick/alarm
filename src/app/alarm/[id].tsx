@@ -1,8 +1,18 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Dimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -48,11 +58,33 @@ const KI_FLOW: Step[] = ['how', 'source', 'draft', 'toneVoice', 'schedule'];
 const PRESET_FLOW: Step[] = ['how', 'preset', 'schedule'];
 
 /**
+ * Resolves the navigation flow for the chosen creation path — and with it, the
+ * total step count the progress bar shows. `null` while on `how`, before the
+ * user has picked preset vs. AI, since the step count isn't known yet.
+ *
+ * All AI sub-paths (topic/own-text/source) share `KI_FLOW` today, but a branch
+ * that genuinely needs fewer/other steps only has to return a different array
+ * here — the header and step navigation adapt automatically.
+ */
+function resolveFlow(mode: Mode | null): Step[] | null {
+  if (mode === 'preset') return PRESET_FLOW;
+  if (mode === 'ki') return KI_FLOW;
+  return null;
+}
+
+/**
  * Subtle summary of the decisions already made — shown below the progress
  * bar so the user can see, in later steps, what their selection is based on
  * (topic/own text/source, then tone & voice).
  */
-function decisionCrumbs(step: Step, draft: Alarm): string[] {
+/** Crumbs grouped by the step they were decided on: `basis` (source/draft) stands
+ *  alone; `toneVoice` (tone + voice) are decided together and rendered as a stack. */
+interface DecisionCrumbs {
+  basis: string | null;
+  toneVoice: string[];
+}
+
+function decisionCrumbs(step: Step, draft: Alarm): DecisionCrumbs {
   const basisLabel = (): string => {
     if (draft.source === 'verbatim') return 'Own text';
     switch (draft.aiBasis) {
@@ -65,13 +97,12 @@ function decisionCrumbs(step: Step, draft: Alarm): string[] {
         return `Topic · ${topicOption(draft.topic ?? 'motivation').label}`;
     }
   };
-  const out: string[] = [];
-  if (step === 'draft' || step === 'toneVoice' || step === 'schedule') out.push(basisLabel());
-  if (step === 'schedule') {
-    out.push(`Tone · ${toneOption(draft.tone).label}`);
-    out.push(`Voice · ${voiceOption(draft.voice).label}`);
-  }
-  return out;
+  const basis = step === 'toneVoice' || step === 'schedule' ? basisLabel() : null;
+  const toneVoice =
+    step === 'schedule'
+      ? [`Tone · ${toneOption(draft.tone).label}`, `Voice · ${voiceOption(draft.voice).label}`]
+      : [];
+  return { basis, toneVoice };
 }
 
 /** Small section title. */
@@ -101,7 +132,9 @@ export default function AlarmEditorScreen() {
 
   const [draft, setDraft] = useState<Alarm>(initial);
   const [step, setStep] = useState<Step>(initialStepParam === 'schedule' ? 'schedule' : 'how');
-  const [mode, setMode] = useState<Mode>(initial.source === 'verbatim' ? 'ki' : 'ki');
+  // `null` = not chosen yet (still on the "how" step) — jumping straight to `schedule`
+  // (e.g. from a home-screen suggestion) already implies the AI path.
+  const [mode, setMode] = useState<Mode | null>(initialStepParam === 'schedule' ? 'ki' : null);
   const [basisTab, setBasisTab] = useState<AiBasis>(
     initial.source === 'verbatim' ? 'text' : (initial.aiBasis ?? 'topic'),
   );
@@ -113,6 +146,16 @@ export default function AlarmEditorScreen() {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
+
+  // Topic-basis suggestion carousel: each page is a batch of (up to) 3 texts
+  // from one "Generate More" click, stacked vertically; pages themselves are
+  // swiped between horizontally. `selected` is the one box the user tapped —
+  // independent of which page is currently in view — and always mirrors `draft.text`.
+  const [pages, setPages] = useState<string[][]>([]);
+  const [activePage, setActivePage] = useState(0);
+  const [selected, setSelected] = useState<{ page: number; box: number } | null>(null);
+  const [pagerWidth, setPagerWidth] = useState(0);
+  const pagerRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     void settingsRepo.getLinkConsent().then(setLinkConsent);
@@ -171,24 +214,84 @@ export default function AlarmEditorScreen() {
     else patch({ source: 'ai', aiBasis: 'text', basisText: value });
   };
 
-  /** Generates (or regenerates, for "Re-roll") a topic-based AI draft. */
+  /**
+   * Fetches one page's worth of (up to 3) distinct suggestions in parallel.
+   * `variantOffset` only affects the mock fallback (picks between pre-written
+   * phrasings) — the real Claude call already samples non-deterministically.
+   * Tolerates partial failures via `allSettled`; returns whichever succeeded.
+   */
+  const fetchSuggestionPage = async (topic: TopicId, variantOffset: number): Promise<string[]> => {
+    const settled = await Promise.allSettled(
+      [0, 1, 2].map((i) =>
+        generateWakeText({ ...draft, source: 'ai', aiBasis: 'topic', topic }, variantOffset + i),
+      ),
+    );
+    return settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value.text] : []));
+  };
+
+  /**
+   * Generates a fresh first page of 3 topic-based suggestions, replacing the
+   * whole carousel — used when a topic chip is tapped or the topic step is
+   * entered for the first time. The first box is pre-selected.
+   */
   const generateDraft = async (topicOverride?: TopicId) => {
     const targetTopic = topicOverride ?? draft.topic ?? DEFAULT_TOPIC;
     setGenError(null);
     setGenerating(true);
     try {
-      const { text } = await generateWakeText({
-        ...draft,
-        source: 'ai',
-        aiBasis: 'topic',
-        topic: targetTopic,
-      });
-      patch({ topic: targetTopic, text });
+      const texts = await fetchSuggestionPage(targetTopic, 0);
+      if (texts.length === 0) {
+        setGenError('Could not generate.');
+        return;
+      }
+      setPages([texts]);
+      setActivePage(0);
+      setSelected({ page: 0, box: 0 });
+      patch({ topic: targetTopic, text: texts[0] });
     } catch (e) {
       setGenError(e instanceof Error ? e.message : 'Could not generate.');
     } finally {
       setGenerating(false);
     }
+  };
+
+  /**
+   * "Generate More": adds a new page of 3 suggestions and swipes to it.
+   * Doesn't touch the current selection — generating more options shouldn't
+   * silently change the alarm text the user already picked.
+   */
+  const generateMoreDrafts = async () => {
+    const targetTopic = draft.topic ?? DEFAULT_TOPIC;
+    const pageIndex = pages.length;
+    const variantOffset = pages.reduce((n, p) => n + p.length, 0);
+    setGenError(null);
+    setGenerating(true);
+    try {
+      const texts = await fetchSuggestionPage(targetTopic, variantOffset);
+      if (texts.length === 0) {
+        setGenError('Could not generate.');
+        return;
+      }
+      setPages((prev) => [...prev, texts]);
+      setActivePage(pageIndex);
+      requestAnimationFrame(() => {
+        pagerRef.current?.scrollTo({ x: pageIndex * pagerWidth, animated: true });
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  /** User tapped a specific suggestion box — that one becomes the alarm text. */
+  const selectSuggestion = (page: number, box: number, text: string) => {
+    setSelected({ page, box });
+    patch({ text });
+  };
+
+  const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (pagerWidth <= 0) return;
+    const idx = Math.max(0, Math.min(Math.round(e.nativeEvent.contentOffset.x / pagerWidth), pages.length - 1));
+    setActivePage(idx);
   };
 
   /** Step 1 "Source": commits the chosen basis and advances to the Draft step. */
@@ -247,17 +350,21 @@ export default function AlarmEditorScreen() {
 
   // --- Navigation ---------------------------------------------------------------
 
-  const flow = mode === 'preset' ? PRESET_FLOW : KI_FLOW;
-  const stepIndex = Math.max(0, flow.indexOf(step));
+  const flow = resolveFlow(mode);
+  const stepIndex = flow ? Math.max(0, flow.indexOf(step)) : 0;
   const crumbs = decisionCrumbs(step, draft);
+  // Progress bar only makes sense once the total step count is settled: not on `how`
+  // (preset vs. AI not chosen — even if `mode` is stale from a previous visit via
+  // "back") and not on `source` (topic/own-text/source not chosen).
+  const showProgress = flow !== null && step !== 'how' && step !== 'source';
 
   const goNext = () => {
-    const next = flow[stepIndex + 1];
+    const next = flow?.[stepIndex + 1];
     if (next) setStep(next);
   };
   const goBack = () => {
     if (step === 'how') return animateClose();
-    const prev = flow[stepIndex - 1];
+    const prev = flow?.[stepIndex - 1];
     setStep(prev ?? 'how');
   };
 
@@ -319,28 +426,41 @@ export default function AlarmEditorScreen() {
             <Pressable onPress={goBack} hitSlop={10} style={styles.back}>
               <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
-            <View style={styles.progress}>
-              {flow.slice(1).map((s, i) => (
-                <View
-                  key={s}
-                  style={[
-                    styles.progressSeg,
-                    { backgroundColor: i < stepIndex ? theme.accent : theme.backgroundSelected },
-                  ]}
-                />
-              ))}
-            </View>
+            {showProgress && flow && (
+              <View style={styles.progress}>
+                {flow.slice(1).map((s, i) => (
+                  <View
+                    key={s}
+                    style={[
+                      styles.progressSeg,
+                      { backgroundColor: i < stepIndex ? theme.accent : theme.backgroundSelected },
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
           </View>
 
-          {crumbs.length > 0 && (
+          {(crumbs.basis || crumbs.toneVoice.length > 0) && (
             <View style={styles.crumbs}>
-              {crumbs.map((c) => (
-                <View key={c} style={[styles.crumb, { backgroundColor: theme.backgroundElement }]}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {c}
+              {crumbs.basis && (
+                <View style={[styles.crumb, { backgroundColor: theme.backgroundElement }]}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.crumbText}>
+                    {crumbs.basis}
                   </ThemedText>
                 </View>
-              ))}
+              )}
+              {crumbs.toneVoice.length > 0 && (
+                <View style={styles.crumbGroup}>
+                  {crumbs.toneVoice.map((c) => (
+                    <View key={c} style={[styles.crumb, { backgroundColor: theme.backgroundElement }]}>
+                      <ThemedText type="small" themeColor="textSecondary" style={styles.crumbText}>
+                        {c}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           )}
 
@@ -435,21 +555,69 @@ export default function AlarmEditorScreen() {
                         />
                       ))}
                     </View>
-                    <View style={[styles.previewBox, { backgroundColor: theme.backgroundElement }]}>
-                      <ThemedText type="small" themeColor={generating ? 'textSecondary' : undefined}>
-                        {generating ? 'Generating …' : draft.text || '—'}
-                      </ThemedText>
+                    <View
+                      style={styles.pagerWrap}
+                      onLayout={(e) => setPagerWidth(e.nativeEvent.layout.width)}>
+                      {pages.length === 0 ? (
+                        <View style={[styles.suggestionCard, { backgroundColor: theme.backgroundElement }]}>
+                          <ThemedText type="small" themeColor="textSecondary">
+                            {generating ? 'Generating …' : '—'}
+                          </ThemedText>
+                        </View>
+                      ) : (
+                        <ScrollView
+                          ref={pagerRef}
+                          horizontal
+                          pagingEnabled
+                          showsHorizontalScrollIndicator={false}
+                          onMomentumScrollEnd={onPagerScrollEnd}>
+                          {pages.map((page, p) => (
+                            <View key={p} style={[styles.pageStack, { width: pagerWidth || undefined }]}>
+                              {page.map((text, b) => {
+                                const isSelected = selected?.page === p && selected.box === b;
+                                return (
+                                  <Pressable
+                                    key={b}
+                                    onPress={() => selectSuggestion(p, b, text)}
+                                    style={[
+                                      styles.suggestionCard,
+                                      {
+                                        backgroundColor: theme.backgroundElement,
+                                        borderColor: isSelected ? theme.accent : 'transparent',
+                                      },
+                                    ]}>
+                                    <ThemedText type="small">{text}</ThemedText>
+                                  </Pressable>
+                                );
+                              })}
+                            </View>
+                          ))}
+                        </ScrollView>
+                      )}
                     </View>
+                    {pages.length > 1 && (
+                      <View style={styles.dotsRow}>
+                        {pages.map((_, p) => (
+                          <View
+                            key={p}
+                            style={[
+                              styles.pagerDot,
+                              { backgroundColor: p === activePage ? theme.accent : theme.backgroundSelected },
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    )}
                     {genError && (
                       <ThemedText type="small" style={{ color: theme.danger }}>
                         {genError}
                       </ThemedText>
                     )}
                     <PrimaryButton
-                      title="Re-roll"
+                      title="Generate More"
                       variant="ghost"
                       loading={generating}
-                      onPress={() => void generateDraft()}
+                      onPress={() => void generateMoreDrafts()}
                     />
                   </>
                 )}
@@ -686,8 +854,18 @@ const styles = StyleSheet.create({
   progressSeg: { height: 4, flex: 1, borderRadius: 2 },
   // Decision summary below the progress bar; paddingBottom deliberately
   // creates spacing from the section heading.
-  crumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, paddingHorizontal: Spacing.four, paddingTop: Spacing.one, paddingBottom: Spacing.three },
-  crumb: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  crumbs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.one,
+    paddingBottom: Spacing.three,
+  },
+  crumbGroup: { gap: Spacing.one },
+  crumb: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999 },
+  crumbText: { fontSize: 12, lineHeight: 16 },
   scroll: { flex: 1 },
   content: { paddingHorizontal: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.four, gap: Spacing.three },
   stepTitle: { fontSize: 22, fontWeight: '700', lineHeight: 28, marginBottom: Spacing.one },
@@ -712,6 +890,18 @@ const styles = StyleSheet.create({
   },
   multiline: { minHeight: 96, textAlignVertical: 'top' },
   previewBox: { padding: Spacing.three, borderRadius: Spacing.two },
+  pagerWrap: { minHeight: 72 },
+  pageStack: { gap: Spacing.two },
+  suggestionCard: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+    minHeight: 68,
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  dotsRow: { flexDirection: 'row', gap: Spacing.one, justifyContent: 'center' },
+  pagerDot: { width: 6, height: 6, borderRadius: 3 },
   stepTitleCentered: { textAlign: 'center', marginBottom: Spacing.half },
   divider: { height: 2, borderRadius: 1, marginBottom: Spacing.three },
   timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
