@@ -25,7 +25,7 @@ export interface PresetOption {
 export const PRESET_OPTIONS: PresetOption[] = [
   {
     id: 'gentle-start',
-    label: 'Gentle Start',
+    label: 'Mindfulness',
     subtitle: 'Ease in, don’t snap awake.',
     color: '#3C9EFF',
     quoteCategory: 'mindfulness',
@@ -34,7 +34,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'power-motivation',
-    label: 'Power Motivation',
+    label: 'Motivation',
     subtitle: 'No snooze. Just go.',
     color: '#F76B15',
     quoteCategory: 'motivation',
@@ -43,7 +43,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'daily-focus',
-    label: 'Daily Focus',
+    label: 'Focus',
     subtitle: 'One thing first. Then the rest.',
     color: '#30A46C',
     quoteCategory: 'focus',
@@ -52,7 +52,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'good-mood',
-    label: 'Good Mood',
+    label: 'Gratitude',
     subtitle: 'Wake up thankful, not groggy.',
     color: '#E5484D',
     quoteCategory: 'gratitude',
@@ -61,7 +61,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'laugh-track',
-    label: 'Laugh Track',
+    label: 'Humor',
     subtitle: 'Wit before coffee.',
     color: '#FFC53D',
     quoteCategory: 'humor',
@@ -70,7 +70,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'main-character',
-    label: 'Main Character',
+    label: 'Confidence',
     subtitle: 'Walk in like you own it.',
     color: '#8E4EC6',
     quoteCategory: 'confidence',
@@ -79,7 +79,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'open-mind',
-    label: 'Open Mind',
+    label: 'Curiosity',
     subtitle: 'What will you notice today?',
     color: '#12A594',
     quoteCategory: 'curiosity',
@@ -88,7 +88,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'unfiltered',
-    label: 'Unfiltered',
+    label: 'Social Media',
     subtitle: 'Raw takes, zero chill.',
     color: '#E93D82',
     quoteCategory: 'social-media',
@@ -97,7 +97,7 @@ export const PRESET_OPTIONS: PresetOption[] = [
   },
   {
     id: 'old-souls',
-    label: 'Old Souls',
+    label: 'Wisdom',
     subtitle: 'Timeless lines, still true.',
     color: '#6E56CF',
     quoteCategory: 'wisdom',
