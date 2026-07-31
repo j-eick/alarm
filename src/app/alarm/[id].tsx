@@ -25,10 +25,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Chip } from '@/components/chip';
 import { PrimaryButton } from '@/components/primary-button';
+import { QuoteCarousel } from '@/components/quote-carousel';
 import { SheetSurface } from '@/components/sheet-surface';
 import { ThemedText } from '@/components/themed-text';
 import { WeekdayPicker } from '@/components/weekday-picker';
-import { PRESET_OPTIONS, presetOption } from '@/constants/presets';
+import { PRESET_OPTIONS, presetOption, type PresetOption } from '@/constants/presets';
+import type { Quote } from '@/constants/quotes';
 import { Spacing } from '@/constants/theme';
 import { TONE_OPTIONS, toneOption } from '@/constants/tones';
 import { DEFAULT_TOPIC, TOPIC_OPTIONS, topicOption } from '@/constants/topics';
@@ -50,12 +52,13 @@ const OVERSHOOT_PAD = 120;
 const CLOSE_DISTANCE = 120;
 const CLOSE_VELOCITY = 800;
 
-type Step = 'how' | 'preset' | 'source' | 'draft' | 'toneVoice' | 'schedule';
+type Step = 'how' | 'preset' | 'quotes' | 'source' | 'draft' | 'toneVoice' | 'schedule';
 type Mode = 'preset' | 'ki';
 
 /** The real 4-step stepper for AI-composed wake-up sounds: Source → Draft → Tone & Voice → Schedule. */
 const KI_FLOW: Step[] = ['how', 'source', 'draft', 'toneVoice', 'schedule'];
-const PRESET_FLOW: Step[] = ['how', 'preset', 'schedule'];
+/** The 4-step stepper for presets: Preset → Quotes (pick one verbatim line) → Schedule. */
+const PRESET_FLOW: Step[] = ['how', 'preset', 'quotes', 'schedule'];
 
 /**
  * Resolves the navigation flow for the chosen creation path — and with it, the
@@ -84,7 +87,7 @@ interface DecisionCrumbs {
   toneVoice: string[];
 }
 
-function decisionCrumbs(step: Step, draft: Alarm): DecisionCrumbs {
+function decisionCrumbs(step: Step, draft: Alarm, selectedPreset: PresetOption | null): DecisionCrumbs {
   const basisLabel = (): string => {
     if (draft.source === 'verbatim') return 'Own text';
     switch (draft.aiBasis) {
@@ -97,9 +100,17 @@ function decisionCrumbs(step: Step, draft: Alarm): DecisionCrumbs {
         return `Topic · ${topicOption(draft.topic ?? 'motivation').label}`;
     }
   };
-  const basis = step === 'toneVoice' || step === 'schedule' ? basisLabel() : null;
+  // Preset flow: show the chosen preset itself as the "basis" crumb once past
+  // the preset step, mirroring how the AI flow shows its topic/source basis.
+  const presetLabel = selectedPreset ? `Preset · ${selectedPreset.label}` : null;
+  const basis =
+    step === 'quotes' || step === 'schedule'
+      ? (presetLabel ?? (step === 'schedule' ? basisLabel() : null))
+      : step === 'toneVoice'
+        ? basisLabel()
+        : null;
   const toneVoice =
-    step === 'schedule'
+    step === 'schedule' && !selectedPreset
       ? [`Tone · ${toneOption(draft.tone).label}`, `Voice · ${voiceOption(draft.voice).label}`]
       : [];
   return { basis, toneVoice };
@@ -146,6 +157,14 @@ export default function AlarmEditorScreen() {
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(Platform.OS === 'ios');
+  // Preset flow: which preset the user tapped on the 'preset' step, remembered
+  // across the intermediate 'quotes' step so the carousel knows which quote
+  // category/tone/voice to apply once a specific quote is picked.
+  const [selectedPreset, setSelectedPreset] = useState<PresetOption | null>(null);
+  // Preset flow: which quote the user has picked (but not yet confirmed) on the
+  // 'quotes' step — tapping a card marks it selected; the bottom "Next" button
+  // is what actually commits it to the draft and advances to 'schedule'.
+  const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
   // Topic-basis suggestion carousel: each page is a batch of (up to) 3 texts
   // from one "Generate More" click, stacked vertically; pages themselves are
@@ -352,7 +371,7 @@ export default function AlarmEditorScreen() {
 
   const flow = resolveFlow(mode);
   const stepIndex = flow ? Math.max(0, flow.indexOf(step)) : 0;
-  const crumbs = decisionCrumbs(step, draft);
+  const crumbs = decisionCrumbs(step, draft, selectedPreset);
   // Progress bar only makes sense once the total step count is settled: not on `how`
   // (preset vs. AI not chosen — even if `mode` is stale from a previous visit via
   // "back") and not on `source` (topic/own-text/source not chosen).
@@ -370,19 +389,34 @@ export default function AlarmEditorScreen() {
 
   const chooseMode = (m: Mode) => {
     setMode(m);
+    if (m !== 'preset') setSelectedPreset(null);
     setStep(m === 'preset' ? 'preset' : 'source');
   };
 
   const choosePreset = (presetId: string) => {
     const p = presetOption(presetId);
     if (!p) return;
+    setSelectedPreset(p);
+    // Any quote selected under a previously visited preset/category must not
+    // leak into this (possibly different) one — same staleness fix as
+    // `chooseMode` clearing `selectedPreset` when leaving the preset path.
+    setSelectedQuote(null);
+    setStep('quotes');
+  };
+
+  /** User tapped the centered quote card on the 'quotes' step — marks it as the pick, no navigation. */
+  const selectQuote = (quote: Quote) => {
+    setSelectedQuote((prev) => (prev?.id === quote.id ? null : quote));
+  };
+
+  /** "Next" from the 'quotes' step: commits the picked quote to the draft, then advances. */
+  const confirmQuote = () => {
+    if (!selectedPreset || !selectedQuote) return;
     patch({
-      source: p.source,
-      aiBasis: p.aiBasis,
-      topic: p.topic,
-      text: p.text ?? '',
-      tone: p.tone,
-      voice: p.voice,
+      source: 'verbatim',
+      text: selectedQuote.text,
+      tone: selectedPreset.tone,
+      voice: selectedPreset.voice,
     });
     setStep('schedule');
   };
@@ -399,12 +433,15 @@ export default function AlarmEditorScreen() {
 
   // Allowed to proceed?
   const canProceed =
-    step !== 'draft' ||
-    (basisTab === 'topic'
-      ? true
-      : basisTab === 'text'
-        ? textValue.trim().length > 0
-        : sourceValue.trim().length > 0 && linkConsent);
+    step === 'draft'
+      ? basisTab === 'topic'
+        ? true
+        : basisTab === 'text'
+          ? textValue.trim().length > 0
+          : sourceValue.trim().length > 0 && linkConsent
+      : step === 'quotes'
+        ? selectedQuote !== null
+        : true;
 
   const topGap = insets.top + 36;
 
@@ -501,12 +538,27 @@ export default function AlarmEditorScreen() {
                     <View style={styles.cardBody}>
                       <ThemedText type="smallBold">{p.label}</ThemedText>
                       <ThemedText type="small" themeColor="textSecondary">
-                        {p.description}
+                        {p.subtitle}
                       </ThemedText>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
                   </Pressable>
                 ))}
+              </>
+            )}
+
+            {step === 'quotes' && selectedPreset && (
+              <>
+                <ThemedText style={styles.stepTitle}>Find Your Line</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.quotesHint}>
+                  Tap the one that sounds like your morning, then hit Next.
+                </ThemedText>
+                <QuoteCarousel
+                  category={selectedPreset.quoteCategory}
+                  color={selectedPreset.color}
+                  selectedQuoteId={selectedQuote?.id ?? null}
+                  onSelect={selectQuote}
+                />
               </>
             )}
 
@@ -785,8 +837,12 @@ export default function AlarmEditorScreen() {
                 <PrimaryButton title="Cancel" variant="neutral" onPress={animateClose} style={styles.actionButton} />
                 <PrimaryButton title="Save" onPress={() => void handleSave()} style={styles.actionButton} />
               </View>
-            ) : step === 'draft' || step === 'toneVoice' ? (
-              <PrimaryButton title="Next" onPress={goNext} disabled={!canProceed} />
+            ) : step === 'draft' || step === 'toneVoice' || step === 'quotes' ? (
+              <PrimaryButton
+                title="Next"
+                onPress={() => (step === 'quotes' ? confirmQuote() : goNext())}
+                disabled={!canProceed}
+              />
             ) : null}
           </View>
 
@@ -869,6 +925,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { paddingHorizontal: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.four, gap: Spacing.three },
   stepTitle: { fontSize: 22, fontWeight: '700', lineHeight: 28, marginBottom: Spacing.one },
+  quotesHint: { marginBottom: Spacing.two },
   section: { gap: Spacing.two },
   card: {
     flexDirection: 'row',
